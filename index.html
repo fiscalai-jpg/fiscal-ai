@@ -1,1395 +1,982 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FiscalAI — Deduction Decoder: The Bank-to-Books GL Sorter</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600;700&display=swap');
-:root {
-  --ink:#0A0F1A; --ink2:#111827; --ink3:#1C2B3A;
-  --gold:#C8973A; --gold2:#E5B96A; --gold3:#F5DFA0;
-  --cream:#FAF6EE; --cream2:#F0E8D8; --paper:#FFFFFF;
-  --mist:#7A92A8; --green:#1A9E6E; --green-bg:#ECFDF5;
-  --red:#C84040; --red-bg:#FEF2F2;
-  --amber:#D97706; --amber-bg:#FFFBEB;
-  --border:rgba(200,151,58,0.18);
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-html{scroll-behavior:smooth;}
-body{background:var(--cream);font-family:'Outfit',sans-serif;color:var(--ink);min-height:100vh;}
-body::before{content:'';position:fixed;inset:0;z-index:0;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");
-  pointer-events:none;}
-.gold-rule{height:3px;background:linear-gradient(90deg,transparent 0%,var(--gold) 30%,var(--gold2) 50%,var(--gold) 70%,transparent 100%);}
-.page{position:relative;z-index:1;max-width:980px;margin:0 auto;padding:0 24px 120px;}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FiscalAI — Deduction Decoder: The Bank-to-Books GL Sorter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --black: #0e0e0e;
+      --carbon: #141414;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --gold-dark: #8B6914;
+      --gold-mid: #C9A84C;
+      --gold-light: #F0D060;
+      --champagne: #F5E6C8;
+      --muted: #8a7a6a;
+      --danger: #c0392b;
+      --success: #2ecc71;
+    }
 
-/* ─── HERO ─── */
-.hero{padding:50px 0 38px;display:grid;grid-template-columns:1fr auto;align-items:end;gap:20px;border-bottom:1px solid var(--border);margin-bottom:10px;}
-.eyebrow{font-size:10px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;display:block;}
-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,4.5vw,52px);font-weight:700;line-height:1.05;}
-h1 em{font-style:italic;color:var(--gold);}
-.hero-sub{font-size:14px;color:var(--mist);font-weight:300;margin-top:10px;line-height:1.6;max-width:420px;}
-/* total-box defined in hero-metrics block above */
-.total-label{font-size:9px;font-weight:600;letter-spacing:3.5px;text-transform:uppercase;color:var(--mist);margin-bottom:6px;}
-.total-number{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:700;line-height:1;color:var(--gold3);transition:all 0.4s;}
-.total-sub{font-size:11px;color:var(--mist);margin-top:5px;}
-.tax-save{font-size:12.5px;font-weight:600;color:var(--green);margin-top:7px;opacity:0;transition:opacity 0.4s;}
-.tax-save.show{opacity:1;}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* LIVE READINESS SCORE HERO WIDGET */
-.hero-metrics{display:flex;gap:12px;align-items:stretch;flex-shrink:0;}
-.total-box{background:var(--ink2);border-radius:18px;padding:20px 22px;min-width:178px;text-align:center;border:1px solid rgba(200,151,58,0.2);}
-.readiness-box{background:var(--ink2);border-radius:18px;padding:18px 20px;min-width:150px;text-align:center;border:1px solid rgba(200,151,58,0.2);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.readiness-box::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,rgba(200,151,58,0.06),transparent 70%);pointer-events:none;}
-.hero-ring-wrap{position:relative;width:70px;height:70px;margin:0 auto 7px;}
-.hero-ring-wrap svg{position:absolute;inset:0;transform:rotate(-90deg);}
-.hr-track{fill:none;stroke:rgba(255,255,255,0.08);stroke-width:7;}
-.hr-fill{fill:none;stroke-width:7;stroke-linecap:round;stroke-dasharray:200;stroke-dashoffset:200;transition:stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1),stroke 0.4s;}
-.hero-score-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold3);}
-.readiness-box-label{font-size:9px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--mist);margin-bottom:4px;}
-.readiness-box-grade{font-size:11px;font-weight:600;color:var(--gold2);line-height:1.3;}
+    body {
+      background: var(--carbon);
+      color: var(--champagne);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
 
-/* READINESS HOVER TOOLTIP */
-.readiness-box{cursor:help;}
-.readiness-tooltip{
-  position:absolute;
-  bottom:calc(100% + 12px);
-  right:0;
-  background:var(--ink2);
-  border:1px solid rgba(200,151,58,0.25);
-  border-radius:14px;
-  padding:14px 16px;
-  width:260px;
-  box-shadow:0 12px 36px rgba(0,0,0,0.35);
-  opacity:0;
-  pointer-events:none;
-  transition:opacity 0.22s,transform 0.22s;
-  transform:translateY(6px);
-  z-index:200;
-  text-align:left;
-}
-.readiness-tooltip::after{
-  content:'';
-  position:absolute;
-  top:100%;
-  right:28px;
-  border:6px solid transparent;
-  border-top-color:rgba(200,151,58,0.25);
-}
-.readiness-box:hover .readiness-tooltip{opacity:1;transform:translateY(0);}
-.rt-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
-.rt-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;font-size:12px;line-height:1.45;}
-.rt-item:last-child{margin-bottom:0;}
-.rt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;}
-.rt-dot.done{background:var(--green);}
-.rt-dot.todo{background:rgba(255,255,255,0.18);}
-.rt-text{color:#CBD5E0;font-weight:400;}
-.rt-text.done{color:#6EE7B7;text-decoration:line-through;opacity:0.6;}
-.rt-footer{font-size:11px;color:var(--mist);margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);}
+    /* ─── HEADER ─────────────────────────────────── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: rgba(14,14,14,0.96);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
 
-/* VALUE STRIP */
-.value-strip{background:var(--ink2);border-radius:0 0 16px 16px;padding:14px 22px;margin-bottom:32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;border:1px solid rgba(200,151,58,0.15);border-top:none;}
-.vp{display:flex;align-items:center;gap:8px;font-size:12px;color:#CBD5E0;}
-.vp-icon{font-size:15px;}
-.vp strong{color:var(--gold2);}
-.vp-div{width:1px;height:22px;background:rgba(255,255,255,0.08);flex-shrink:0;}
+    .logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-mid), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.08em;
+    }
 
-/* ─── EMAIL GATE MODAL ─── */
-.modal-overlay{position:fixed;inset:0;z-index:300;background:rgba(10,15,26,0.92);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px);}
-.modal-overlay.show{display:flex;}
-.modal-card{background:var(--paper);border-radius:22px;padding:40px 36px;max-width:460px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,0.5);border:1px solid rgba(200,151,58,0.25);animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);}
-@keyframes popIn{from{opacity:0;transform:scale(0.88);}to{opacity:1;transform:scale(1);}}
-.modal-icon{font-size:40px;margin-bottom:14px;display:block;}
-.modal-eyebrow{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
-.modal-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;line-height:1.1;margin-bottom:10px;}
-.modal-sub{font-size:13.5px;color:var(--mist);line-height:1.6;margin-bottom:24px;}
-.modal-sub strong{color:var(--ink);}
-.free-perks{display:grid;gap:8px;text-align:left;margin-bottom:24px;}
-.perk{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--ink3);line-height:1.4;}
-.perk::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px;}
-.email-input-wrap{position:relative;margin-bottom:12px;}
-.email-input{width:100%;background:var(--cream);border:1.5px solid var(--border);border-radius:10px;padding:13px 16px;font-family:'Outfit',sans-serif;font-size:14px;color:var(--ink);outline:none;transition:border-color 0.2s;}
-.email-input:focus{border-color:var(--gold);}
-.email-input::placeholder{color:var(--mist);}
-.gate-cta{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:11px;padding:14px 20px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.25s;margin-bottom:8px;}
-.gate-cta:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(200,151,58,0.4);}
-.gate-privacy{font-size:11px;color:var(--mist);margin-top:6px;}
+    .header-cta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--black);
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-mid), var(--gold-light));
+      padding: 0.5rem 1.2rem;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: opacity 0.2s;
+    }
+    .header-cta:hover { opacity: 0.85; }
 
-/* ─── PAYWALL MODAL ─── */
-.paywall-overlay{position:fixed;inset:0;z-index:200;background:rgba(10,15,26,0.88);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(6px);}
-.paywall-overlay.show{display:flex;}
-.paywall-card{background:var(--paper);border-radius:24px;padding:40px 36px;max-width:480px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,0.4);border:1px solid rgba(200,151,58,0.2);animation:popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);max-height:90vh;overflow-y:auto;}
-.pw-eyebrow{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;}
-.pw-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;line-height:1.1;margin-bottom:10px;}
-.pw-sub{font-size:13.5px;color:var(--mist);line-height:1.6;margin-bottom:24px;}
-.pw-sub strong{color:var(--ink);}
-/* REFINEMENT 1: $97 one-time */
-.price-block{background:linear-gradient(135deg,rgba(200,151,58,0.08),rgba(200,151,58,0.03));border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:22px;}
-.price-badge{display:inline-block;background:var(--red-bg);color:var(--red);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;margin-bottom:6px;}
-.price-now{font-family:'Cormorant Garamond',serif;font-size:62px;font-weight:700;color:var(--gold);line-height:1;}
-.price-period{font-size:12.5px;color:var(--mist);margin-top:3px;}
-.price-note{display:inline-block;background:var(--green-bg);color:var(--green);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-top:8px;}
-.pw-features{text-align:left;margin-bottom:22px;display:grid;gap:8px;}
-.pw-feat{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--ink);line-height:1.4;}
-.pw-feat::before{content:'✓';color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px;}
-.pw-urgency{background:rgba(200,58,58,0.08);border:1px solid rgba(200,58,58,0.25);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--red);font-weight:500;margin-bottom:18px;line-height:1.4;}
-.pw-cta{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:13px;padding:15px 24px;font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:700;cursor:pointer;transition:all 0.25s;margin-bottom:8px;}
-.pw-cta:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(200,151,58,0.4);}
-.pw-skip{font-size:12px;color:var(--mist);cursor:pointer;text-decoration:underline;}
-.pw-skip:hover{color:var(--ink);}
-.pw-guarantee{font-size:11px;color:var(--mist);margin-top:12px;line-height:1.5;}
+    /* ─── HERO ───────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 5rem 2rem 4rem;
+      max-width: 760px;
+      margin: 0 auto;
+    }
 
-/* ACCESS BAR */
-.access-bar{background:linear-gradient(135deg,rgba(200,151,58,0.08),rgba(200,151,58,0.03));border:1px solid var(--border);border-radius:12px;padding:11px 18px;margin-bottom:22px;display:none;align-items:center;justify-content:space-between;gap:12px;}
-.access-bar.show{display:flex;}
-.access-msg{font-size:13px;color:var(--ink);font-weight:500;}
-.access-msg span{color:var(--gold);font-weight:700;}
+    .eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold-mid);
+      margin-bottom: 1.5rem;
+    }
 
-/* SECTION LABEL */
-.section-label{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
-.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-mid), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.25rem;
+    }
 
-/* UPLOAD */
-.upload-section{margin-bottom:30px;}
-.free-badge{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(26,158,110,0.15),rgba(26,158,110,0.08));border:1px solid rgba(26,158,110,0.35);border-radius:24px;padding:5px 15px;font-size:12px;font-weight:700;color:var(--green);margin-bottom:14px;}
-.free-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(1.3);}}
-.upload-zone{border:2px dashed rgba(200,151,58,0.35);border-radius:18px;padding:34px 26px;text-align:center;background:linear-gradient(135deg,rgba(200,151,58,0.04),rgba(200,151,58,0.01));cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;}
-.upload-zone::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(200,151,58,0.06),transparent 70%);pointer-events:none;}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:rgba(200,151,58,0.07);}
-.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.upload-icon{font-size:36px;margin-bottom:10px;display:block;}
-.upload-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--ink);margin-bottom:7px;}
-.upload-copy{font-size:13px;color:var(--mist);line-height:1.6;margin-bottom:5px;max-width:440px;margin-left:auto;margin-right:auto;}
-.upload-copy strong{color:var(--ink);}
-.upload-hook{font-size:12px;color:var(--gold);font-weight:600;margin-bottom:16px;font-style:italic;}
-.fmt-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
-.fmt-chip{background:var(--cream2);border-radius:20px;padding:4px 12px;font-size:10.5px;font-weight:600;color:var(--mist);letter-spacing:1px;text-transform:uppercase;}
-.upload-privacy{font-size:11px;color:var(--mist);margin-top:10px;opacity:0.7;}
+    .hero p {
+      font-size: 1.05rem;
+      color: var(--champagne);
+      opacity: 0.85;
+      max-width: 560px;
+      margin: 0 auto 2.5rem;
+    }
 
-/* PARSE */
-.parse-bar{display:none;margin-top:14px;background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:17px 20px;}
-.parse-bar.show{display:block;}
-.parse-status{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
-.parse-spinner{width:20px;height:20px;flex-shrink:0;border:2.5px solid var(--cream2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
-.parse-spinner.done{animation:none;border-color:var(--green);border-top-color:var(--green);}
-@keyframes spin{to{transform:rotate(360deg);}}
-.parse-label{font-size:13.5px;font-weight:500;color:var(--ink);}
-.parse-sub{font-size:11.5px;color:var(--mist);}
-.parse-track{height:6px;background:var(--cream2);border-radius:3px;overflow:hidden;}
-.parse-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold2));width:0%;transition:width 0.5s ease;}
+    .free-badge {
+      display: inline-block;
+      border: 1px solid var(--gold-dark);
+      color: var(--gold-mid);
+      font-size: 0.72rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.35rem 1rem;
+      margin-bottom: 2rem;
+    }
 
-/* PARSED TABLE */
-.parsed-results{display:none;margin-top:14px;}
-.parsed-results.show{display:block;}
-.parsed-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
-.parsed-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;}
-.pstats{display:flex;gap:10px;flex-wrap:wrap;}
-.pstat{text-align:center;background:var(--cream2);border-radius:10px;padding:7px 13px;}
-.pstat-n{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:var(--gold);line-height:1;}
-.pstat-l{font-size:9.5px;color:var(--mist);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
-.table-scroll{max-height:300px;overflow-y:auto;border:1px solid var(--cream2);border-radius:12px;}
-.table-scroll::-webkit-scrollbar{width:4px;}
-.table-scroll::-webkit-scrollbar-track{background:var(--cream);}
-.table-scroll::-webkit-scrollbar-thumb{background:var(--gold);border-radius:4px;}
-.txn-table{width:100%;border-collapse:collapse;font-size:12.5px;}
-.txn-table th{text-align:left;padding:9px 10px;font-size:9.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);border-bottom:2px solid var(--cream2);background:var(--paper);position:sticky;top:0;z-index:1;}
-.txn-table td{padding:8px 10px;border-bottom:1px solid var(--cream2);vertical-align:middle;}
-.txn-table tr:hover td{background:rgba(200,151,58,0.03);}
-.txn-desc{font-weight:500;color:var(--ink);}
-.txn-amt{font-weight:600;color:var(--red);text-align:right;white-space:nowrap;}
-.txn-date{color:var(--mist);white-space:nowrap;font-size:11.5px;}
-.cat-pill{background:var(--cream2);border-radius:6px;padding:3px 9px;font-size:11px;font-weight:500;color:var(--ink3);white-space:nowrap;}
-.cat-pill.mapped{background:rgba(200,151,58,0.12);color:var(--gold);border:1px solid rgba(200,151,58,0.3);}
-/* REFINEMENT 6: Confidence column */
-.conf-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;white-space:nowrap;}
-.conf-high{background:var(--green-bg);color:var(--green);}
-.conf-mid{background:var(--amber-bg);color:var(--amber);}
-.conf-low{background:#F1F5F9;color:#64748B;}
+    /* ─── TOOL CARD ──────────────────────────────── */
+    .tool-wrapper {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+    }
 
-/* CONFIDENCE TOOLTIP */
-.th-tooltip{position:relative;cursor:help;border-bottom:1px dashed var(--mist);padding-bottom:1px;}
-.th-tooltip::after{
-  content:attr(data-tip);
-  position:absolute;
-  bottom:calc(100% + 10px);
-  left:50%;
-  transform:translateX(-50%);
-  background:var(--ink2);
-  color:#CBD5E0;
-  font-size:12px;
-  font-weight:400;
-  letter-spacing:0;
-  text-transform:none;
-  line-height:1.55;
-  padding:10px 14px;
-  border-radius:10px;
-  border:1px solid rgba(200,151,58,0.2);
-  width:240px;
-  white-space:normal;
-  box-shadow:0 8px 24px rgba(0,0,0,0.25);
-  opacity:0;
-  pointer-events:none;
-  transition:opacity 0.2s,transform 0.2s;
-  transform:translateX(-50%) translateY(4px);
-  z-index:100;
-}
-.th-tooltip::before{
-  content:'';
-  position:absolute;
-  bottom:calc(100% + 4px);
-  left:50%;
-  transform:translateX(-50%);
-  border:5px solid transparent;
-  border-top-color:rgba(200,151,58,0.25);
-  opacity:0;
-  transition:opacity 0.2s;
-  z-index:101;
-  pointer-events:none;
-}
-.th-tooltip:hover::after{opacity:1;transform:translateX(-50%) translateY(0);}
-.th-tooltip:hover::before{opacity:1;}
-.apply-bar{background:var(--green-bg);border:1px solid rgba(26,158,110,0.3);border-radius:12px;padding:14px 20px;margin-top:12px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
-.apply-bar.show{display:flex;}
-.apply-msg{font-size:13px;color:var(--green);font-weight:500;}
-.apply-msg span{font-weight:700;}
-.apply-btn{background:linear-gradient(135deg,var(--green),#22C55E);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
-.apply-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,158,110,0.3);}
-.skip-link{font-size:12px;color:var(--mist);cursor:pointer;text-decoration:underline;margin-top:7px;display:block;text-align:center;}
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
 
-/* PROFILE BAR */
-.profile-bar{background:var(--paper);border:1px solid var(--border);border-radius:14px;padding:14px 20px;margin-bottom:26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-.profile-bar label{font-size:10.5px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);}
-.profile-bar select{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:7px 11px;font-family:'Outfit',sans-serif;font-size:13px;color:var(--ink);outline:none;cursor:pointer;transition:border-color 0.2s;}
-.profile-bar select:focus{border-color:var(--gold);}
-.profile-group{display:flex;align-items:center;gap:6px;}
-.found-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);color:var(--green);border-radius:20px;padding:4px 12px;font-size:11.5px;font-weight:600;opacity:0;transition:opacity 0.4s;margin-left:auto;}
-.found-badge.show{opacity:1;}
+    .card-title {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-mid);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
 
-/* LAYOUT — REFINEMENT 2: sticky sidebar confirmed */
-.layout{display:grid;grid-template-columns:1fr 308px;gap:22px;align-items:start;}
+    /* ─── UPLOAD ─────────────────────────────────── */
+    .upload-zone {
+      border: 1px dashed var(--gold-dark);
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--gold-mid);
+      background: rgba(139,105,20,0.06);
+    }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .upload-title {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      color: var(--champagne);
+      margin-bottom: 0.5rem;
+    }
+    .upload-sub { font-size: 0.82rem; color: var(--muted); }
+    .upload-formats { margin-top: 1rem; font-size: 0.72rem; letter-spacing: 0.1em; color: var(--gold-dark); text-transform: uppercase; }
 
-/* CATEGORY CARDS */
-.cat-card{background:var(--paper);border:1px solid var(--border);border-radius:16px;margin-bottom:12px;overflow:hidden;transition:border-color 0.25s,box-shadow 0.25s;box-shadow:0 1px 4px rgba(0,0,0,0.04);}
-.cat-card:hover{border-color:rgba(200,151,58,0.35);}
-.cat-card.open{border-color:var(--gold);box-shadow:0 4px 20px rgba(200,151,58,0.14);}
-.cat-header{display:flex;align-items:center;gap:13px;padding:14px 18px;cursor:pointer;user-select:none;}
-.cat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--cream2);}
-.cat-info{flex:1;min-width:0;}
-.cat-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;line-height:1.2;}
-.cat-hint{font-size:11px;color:var(--mist);margin-top:2px;}
-.cat-right{text-align:right;flex-shrink:0;}
-.cat-total-amt{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--green);line-height:1;transition:all 0.3s;}
-.cat-total-amt.zero{color:var(--mist);}
-.cat-total-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);}
-.chevron{width:22px;height:22px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:11px;transition:transform 0.25s;flex-shrink:0;}
-.cat-card.open .chevron{transform:rotate(180deg);}
-.cat-body{display:none;padding:4px 18px 18px;animation:bodyIn 0.22s ease;}
-.cat-card.open .cat-body{display:block;}
-@keyframes bodyIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
-.ded-row{display:grid;grid-template-columns:1fr 124px 80px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--cream2);}
-.ded-row:last-child{border-bottom:none;}
-.ded-label{font-size:13px;color:var(--ink);font-weight:400;line-height:1.35;}
-.ded-sublabel{font-size:10.5px;color:var(--mist);margin-top:2px;}
-.ded-input-wrap{position:relative;}
-.pfx{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--mist);pointer-events:none;}
-.pfx-sm{left:8px;font-size:11px;}
-.ded-input{width:100%;background:var(--cream);border:1.5px solid var(--border);border-radius:8px;padding:7px 7px 7px 22px;font-family:'Outfit',sans-serif;font-size:13px;color:var(--ink);outline:none;transition:border-color 0.2s,background 0.2s;text-align:right;}
-.ded-input:focus{border-color:var(--gold);background:#fff;}
-.ded-input::placeholder{color:#C8B89A;}
-.ded-input.prefilled{border-color:rgba(200,151,58,0.5);background:rgba(200,151,58,0.04);}
-.ded-deductible{font-size:13px;font-weight:600;color:var(--green);text-align:right;line-height:1.2;}
-.ded-deductible.zero{color:var(--mist);font-weight:400;}
-.ded-pct{font-size:10.5px;color:var(--mist);text-align:right;margin-top:2px;}
-.slider-wrap{grid-column:1/-1;display:grid;grid-template-columns:1fr 54px;gap:10px;align-items:center;padding:4px 0;}
-.pct-slider{-webkit-appearance:none;appearance:none;width:100%;height:4px;background:var(--cream2);border-radius:2px;outline:none;cursor:pointer;}
-.pct-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--gold);border-radius:50%;cursor:pointer;box-shadow:0 2px 6px rgba(200,151,58,0.4);}
-.pct-display{font-size:12px;font-weight:600;color:var(--gold);text-align:center;background:var(--cream2);border-radius:6px;padding:4px 6px;}
+    .privacy-note {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 1rem;
+    }
 
-/* ─── SIDEBAR — REFINEMENT 2: position:sticky ─── */
-.sidebar-col{position:sticky;top:16px;align-self:start;}
-.summary-card{background:var(--ink2);border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid rgba(200,151,58,0.15);}
-.summary-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--gold3);margin-bottom:13px;}
-.summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);}
-.summary-row:last-of-type{border-bottom:none;}
-.s-cat{font-size:11.5px;color:#8FA5B8;}
-.s-amt{font-size:13px;font-weight:600;color:var(--gold2);}
-.s-amt.zero{color:#3D5066;font-weight:400;}
-.summary-divider{height:1px;background:rgba(200,151,58,0.2);margin:11px 0;}
-.summary-total-row{display:flex;justify-content:space-between;align-items:baseline;}
-.summary-total-label{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mist);}
-.summary-total-num{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;color:var(--gold3);transition:all 0.3s;}
-.tax-rate-row{margin-top:9px;padding-top:9px;border-top:1px solid rgba(200,151,58,0.15);display:flex;justify-content:space-between;align-items:center;}
-.tax-est-label{font-size:11px;color:var(--mist);}
-.tax-est-num{font-size:16px;font-weight:700;color:var(--green);}
-.missing-card{background:var(--amber-bg);border:1px solid rgba(217,119,6,0.22);border-radius:14px;padding:15px;margin-bottom:13px;}
-.missing-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--amber);margin-bottom:9px;}
-.missing-item{display:flex;align-items:flex-start;gap:7px;margin-bottom:6px;font-size:11.5px;color:var(--ink3);line-height:1.4;}
-.missing-item::before{content:'!';color:var(--amber);font-weight:700;flex-shrink:0;}
-.ai-btn{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--ink);border:none;border-radius:12px;padding:13px 18px;font-family:'Outfit',sans-serif;font-size:13.5px;font-weight:700;cursor:pointer;transition:all 0.25s;margin-bottom:9px;}
-.ai-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(200,151,58,0.35);}
-.ai-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;}
-.upgrade-btn{width:100%;background:transparent;color:var(--gold);border:1.5px solid var(--gold);border-radius:12px;padding:10px 18px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
-.upgrade-btn:hover{background:rgba(200,151,58,0.08);}
+    /* ─── SELECTS ────────────────────────────────── */
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
 
-/* ─── AI ANALYSIS PANEL ─── */
-.ai-panel{background:var(--paper);border:1.5px solid var(--gold);border-radius:16px;padding:26px;margin-top:20px;display:none;animation:fadeUp 0.35s ease;grid-column:1/-1;}
-.ai-panel.show{display:block;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-.ai-panel-head{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
-.ai-badge{background:var(--ink2);color:var(--gold2);border-radius:8px;padding:5px 12px;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
-.ai-panel-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:700;}
-.ai-spinner{width:28px;height:28px;border:3px solid var(--cream2);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:18px auto;display:none;}
-.ai-spinner.show{display:block;}
+    .form-group label {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-mid);
+      margin-bottom: 0.5rem;
+    }
 
-/* REFINEMENT 5: Schedule C Readiness Score */
-.readiness-block{background:var(--ink2);border-radius:14px;padding:20px 22px;margin-bottom:22px;display:none;}
-.readiness-block.show{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
-.readiness-ring-wrap{position:relative;width:80px;height:80px;flex-shrink:0;}
-.readiness-ring-wrap svg{position:absolute;inset:0;transform:rotate(-90deg);}
-.r-track{fill:none;stroke:rgba(255,255,255,0.1);stroke-width:8;}
-.r-fill{fill:none;stroke-width:8;stroke-linecap:round;stroke-dasharray:220;stroke-dashoffset:220;transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1),stroke 0.5s;}
-.readiness-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--gold3);}
-.readiness-info{}
-.readiness-label{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--mist);margin-bottom:4px;}
-.readiness-grade{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--gold3);margin-bottom:4px;}
-.readiness-sub{font-size:12px;color:#8FA5B8;line-height:1.5;}
+    select {
+      width: 100%;
+      background: var(--carbon);
+      border: 1px solid var(--border);
+      color: var(--champagne);
+      padding: 0.65rem 0.85rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      appearance: none;
+      cursor: pointer;
+    }
+    select:focus { outline: 1px solid var(--gold-dark); }
 
-/* REFINEMENT 4: LLC Risk Flag */
-.llc-flag{background:var(--red-bg);border:1.5px solid rgba(200,64,64,0.3);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:none;}
-.llc-flag.show{display:block;}
-.llc-flag-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
-.llc-flag-icon{font-size:18px;}
-.llc-flag-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:700;color:var(--red);}
-.llc-flag-badge{background:var(--red);color:#fff;border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-left:auto;}
-.llc-flag-body{font-size:13px;color:var(--ink3);line-height:1.65;}
-.llc-flag-body strong{color:var(--red);}
-.llc-items{margin-top:10px;display:grid;gap:6px;}
-.llc-item{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink3);}
-.llc-item::before{content:'⚠';flex-shrink:0;}
+    /* ─── GL TABLE ───────────────────────────────── */
+    .gl-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
 
-.ai-text{font-size:14px;line-height:1.78;color:var(--ink);display:none;white-space:pre-wrap;}
-.ai-text.show{display:block;}
-.action-strip{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
-.action-chip{background:var(--ink2);color:var(--gold2);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:background 0.2s;border:none;}
-.action-chip:hover{background:var(--ink3);}
+    @media (max-width: 600px) { .gl-grid { grid-template-columns: 1fr; } }
 
-/* AD BANNER */
-.ad-banner{background:var(--ink2);border-radius:14px;padding:16px 20px;margin-bottom:26px;display:flex;align-items:center;gap:16px;border-left:4px solid var(--gold);flex-wrap:wrap;}
-.ad-copy{flex:1;}
-.ad-headline{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--gold3);margin-bottom:4px;}
-.ad-sub{font-size:12px;color:#8FA5B8;line-height:1.5;}
-.ad-sub strong{color:var(--gold2);}
-.ad-cta-mini{background:rgba(200,151,58,0.15);border:1px solid var(--gold);color:var(--gold2);border-radius:8px;padding:8px 15px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.2s;border-width:1px;}
-.ad-cta-mini:hover{background:rgba(200,151,58,0.25);}
+    .gl-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0.85rem;
+      background: var(--carbon);
+      border: 1px solid var(--border);
+      gap: 0.5rem;
+    }
 
-@media(max-width:760px){
-  .layout{grid-template-columns:1fr;}
-  .sidebar-col{position:static;}
-  .hero{grid-template-columns:1fr;}
-  .hero-metrics{flex-direction:row;justify-content:flex-start;}
-  .ded-row{grid-template-columns:1fr 108px 68px;gap:7px;}
-  .value-strip{gap:10px;}
-}
-</style>
+    .gl-label {
+      font-size: 0.8rem;
+      color: var(--champagne);
+      opacity: 0.8;
+      flex: 1;
+    }
+
+    .gl-input {
+      width: 90px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--champagne);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      text-align: right;
+      padding: 0.2rem 0;
+    }
+    .gl-input:focus { outline: none; border-bottom-color: var(--gold-mid); }
+
+    /* ─── STATS BAR ──────────────────────────────── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-item {
+      padding: 1.25rem;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+
+    .stat-value {
+      font-family: 'Cinzel', serif;
+      font-size: 1.6rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    /* ─── ANALYZE BUTTON ─────────────────────────── */
+    .btn-analyze {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-mid), var(--gold-light));
+      border: none;
+      font-family: 'Cinzel', serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--black);
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 1.5rem;
+    }
+    .btn-analyze:hover { opacity: 0.88; }
+    .btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ─── RESULTS ────────────────────────────────── */
+    #results-section { display: none; }
+
+    .results-header {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-mid);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .score-ring {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .score-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--gold-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .score-num {
+      font-family: 'Cinzel', serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .score-sub { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    .score-notes { flex: 1; min-width: 200px; }
+    .score-notes p { font-size: 0.88rem; color: var(--champagne); opacity: 0.8; margin-bottom: 0.5rem; }
+
+    .flag-box {
+      padding: 1rem 1.25rem;
+      border-left: 3px solid;
+      margin-bottom: 1rem;
+      font-size: 0.88rem;
+    }
+    .flag-box.warning { border-color: #e67e22; background: rgba(230,126,34,0.06); }
+    .flag-box.danger  { border-color: var(--danger); background: rgba(192,57,43,0.06); }
+    .flag-box.safe    { border-color: var(--success); background: rgba(46,204,113,0.06); }
+
+    .flag-title { font-weight: 500; margin-bottom: 0.25rem; }
+
+    .breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .breakdown-table th {
+      text-align: left;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-mid);
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .breakdown-table td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid rgba(42,42,42,0.5);
+      color: var(--champagne);
+      opacity: 0.85;
+    }
+    .breakdown-table tr:hover td { background: rgba(139,105,20,0.04); }
+
+    /* ─── UPGRADE GATE ───────────────────────────── */
+    .upgrade-gate {
+      background: linear-gradient(135deg, rgba(139,105,20,0.12), rgba(201,168,76,0.06));
+      border: 1px solid var(--gold-dark);
+      padding: 3rem 2.5rem;
+      text-align: center;
+      margin-top: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upgrade-gate::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold-dark), var(--gold-light), var(--gold-dark));
+    }
+
+    .gate-eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold-mid);
+      margin-bottom: 1rem;
+    }
+
+    .gate-headline {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-mid), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .gate-body {
+      font-size: 0.95rem;
+      color: var(--champagne);
+      opacity: 0.8;
+      max-width: 500px;
+      margin: 0 auto 2rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      text-align: left;
+      max-width: 400px;
+      margin: 0 auto 2rem;
+    }
+
+    .feature-list li {
+      font-size: 0.88rem;
+      color: var(--champagne);
+      opacity: 0.85;
+      padding: 0.4rem 0;
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .feature-list li::before {
+      content: '✦';
+      position: absolute;
+      left: 0;
+      color: var(--gold-mid);
+      font-size: 0.6rem;
+      top: 0.55rem;
+    }
+
+    .price-display {
+      margin-bottom: 1.5rem;
+    }
+
+    .price-amount {
+      font-family: 'Cinzel', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .price-period {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-left: 0.25rem;
+    }
+
+    .price-note {
+      font-size: 0.75rem;
+      color: var(--gold-dark);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+    }
+
+    .btn-upgrade {
+      display: inline-block;
+      padding: 1rem 3rem;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-mid), var(--gold-light));
+      border: none;
+      font-family: 'Cinzel', serif;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--black);
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-upgrade:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    .gate-sub {
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* ─── FOOTER ─────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    footer a { color: var(--gold-dark); text-decoration: none; }
+    footer a:hover { color: var(--gold-mid); }
+
+    /* ─── LOADING STATE ──────────────────────────── */
+    .loading { display: none; text-align: center; padding: 2rem; }
+    .loading.active { display: block; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold-mid);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tx-table-wrap { overflow-x: auto; margin-top: 1rem; }
+    .tx-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    .tx-table th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-mid);
+      border-bottom: 1px solid var(--border);
+    }
+    .tx-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid rgba(42,42,42,0.4);
+      color: var(--champagne);
+      opacity: 0.8;
+    }
+    .conf-high { color: var(--success); }
+    .conf-med  { color: #e67e22; }
+    .conf-low  { color: var(--danger); }
+  </style>
 </head>
 <body>
-<div class="gold-rule"></div>
-<div class="page">
 
-<!-- ─── EMAIL GATE MODAL (REFINEMENT 8) ─── -->
-<div class="modal-overlay" id="emailGate">
-  <div class="modal-card">
-    <span class="modal-icon">📂</span>
-    <div class="modal-eyebrow">FiscalAI Deduction Decoder</div>
-    <div class="modal-title">Your Free<br><em style="color:var(--gold)">1-Month Preview</em><br>Is Ready</div>
-    <p class="modal-sub">Your statement is uploaded. Enter your email to unlock your <strong>free GL mapping preview</strong> — no card, no commitment.</p>
-    <div class="free-perks">
-      <div class="perk">AI reads every transaction in your statement</div>
-      <div class="perk">Maps to 10 deduction categories automatically</div>
-      <div class="perk">Schedule C Readiness Score + LLC Risk Flag</div>
-      <div class="perk">Personalized AI deduction analysis — free this month</div>
-    </div>
-    <div class="email-input-wrap">
-      <input type="email" class="email-input" id="gateEmail" placeholder="your@email.com" autocomplete="email">
-    </div>
-    <button class="gate-cta" onclick="submitEmailGate()">Show Me My Free Preview →</button>
-    <p class="gate-privacy">🔒 No spam. No credit card. One email — your results.</p>
-  </div>
-</div>
+<!-- ─── HEADER ──────────────────────────────────────── -->
+<header>
+  <div class="logo">FISCALAI</div>
+  <a href="https://fiscalai.org" class="header-cta" target="_blank">Get Full Access →</a>
+</header>
 
-<!-- ─── PAYWALL MODAL — REFINEMENT 1: $97 one-time ─── -->
-<div class="paywall-overlay" id="paywallOverlay">
-  <div class="paywall-card">
-    <div class="pw-eyebrow">FiscalAI Deduction Decoder</div>
-    <div class="pw-title">You Just Saw<br>What's Possible.<br><em style="color:var(--gold)">Now Own It.</em></div>
-    <p class="pw-sub">Your free month showed you the gaps. <strong>Unlock full year access</strong> — upload every month, track every deduction, and walk into tax season ready.</p>
-    <div class="price-block">
-      <div class="price-badge">ONE-TIME · NO SUBSCRIPTION</div>
-      <div class="price-now">$97</div>
-      <div class="price-period">one-time payment — yours forever</div>
-      <span class="price-note">🔓 Instant full access</span>
-    </div>
-    <div class="pw-urgency">
-      ⏰ <strong>48-hour emergency pricing:</strong> With the April 15 deadline approaching, most operators who act now recover $3,000–$12,000 in deductions they would have missed. Speed is the variable.
-    </div>
-    <div class="pw-features">
-      <div class="pw-feat">Unlimited bank statement uploads — all 12 months</div>
-      <div class="pw-feat">AI transaction mapping to all 10 GL categories</div>
-      <div class="pw-feat">Schedule C Readiness Score on every analysis</div>
-      <div class="pw-feat">LLC Entity Liability Risk Flag — corporate veil audit</div>
-      <div class="pw-feat">Personalized AI deduction gap analysis</div>
-      <div class="pw-feat">Printable year-end deduction report for your CPA</div>
-    </div>
-    <button class="pw-cta" onclick="unlockAccess()">Get Full Access — $97 One-Time</button>
-    <div class="pw-skip" onclick="closePaywall()">I'll stick with my free month for now</div>
-    <p class="pw-guarantee">🔒 Secure checkout · Instant access · One-time payment · No recurring charges</p>
-  </div>
-</div>
+<!-- ─── HERO ────────────────────────────────────────── -->
+<section class="hero">
+  <div class="eyebrow">Free Preview Tool</div>
+  <h1>Deduction Decoder<br/>Bank-to-Books GL Sorter</h1>
+  <p>Upload your bank statement. AI reads every transaction, maps it to the correct GL category, and surfaces what the IRS allows — before you file.</p>
+  <div class="free-badge">No account required · No credit card · Data never leaves your browser</div>
+</section>
 
-<!-- ─── HERO — REFINEMENT 7: Updated H1 ─── -->
-<div class="hero">
-  <div>
-    <span class="eyebrow">FiscalAI</span>
-    <h1>Deduction Decoder:<br><em>The Bank-to-Books</em><br>GL Sorter</h1>
-    <p class="hero-sub">Upload your bank statement. AI reads every transaction, sorts it to the correct GL category, and calculates what the IRS owes you — before you file.</p>
-  </div>
-  <div class="hero-metrics">
-    <div class="total-box">
-      <div class="total-label">Total Deductions</div>
-      <div class="total-number" id="grandTotal">$0</div>
-      <div class="total-sub">across all GL categories</div>
-      <div class="tax-save" id="taxSave">≈ $0 in tax savings</div>
+<!-- ─── TOOL ─────────────────────────────────────────── -->
+<div class="tool-wrapper">
+
+  <!-- Step 1: Upload -->
+  <div class="card" id="step-upload">
+    <div class="card-title">Step 01 — Upload Bank Statement</div>
+    <div class="upload-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".csv,.pdf,.ofx,.qbo,.txt" />
+      <div class="upload-icon">🏦</div>
+      <div class="upload-title">Drop Your Bank Statement Here</div>
+      <div class="upload-sub">or click to browse</div>
+      <div class="upload-formats">CSV · PDF · OFX · QBO · TXT</div>
     </div>
-    <div class="readiness-box">
-      <div class="readiness-box-label">Sch. C Readiness</div>
-      <div class="hero-ring-wrap">
-        <svg viewBox="0 0 70 70">
-          <circle class="hr-track" cx="35" cy="35" r="30"/>
-          <circle class="hr-fill" id="heroRFill" cx="35" cy="35" r="30"/>
-        </svg>
-        <div class="hero-score-num" id="heroScoreNum">0</div>
+    <p class="privacy-note">🔒 Your data never leaves your browser. Nothing stored or transmitted.</p>
+
+    <div class="loading" id="uploadLoading">
+      <div class="spinner"></div>
+      <div style="font-size:0.82rem; color:var(--muted);">Reading transactions...</div>
+    </div>
+
+    <div id="txResults" style="display:none; margin-top:1.5rem;">
+      <div class="card-title" style="margin-bottom:1rem;">Mapped Transactions</div>
+      <div class="tx-table-wrap">
+        <table class="tx-table" id="txTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>GL Category</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="txBody"></tbody>
+        </table>
       </div>
-      <div class="readiness-box-grade" id="heroScoreGrade">Start filling<br>to score</div>
-      <div class="readiness-tooltip" id="readinessTip">
-        <div class="rt-title">What Raises Your Score</div>
-        <div id="rtItems"><!-- populated by JS --></div>
-        <div class="rt-footer" id="rtFooter">Hover anytime to see what's left.</div>
+      <button class="btn-analyze" id="applyToDecoder" style="margin-top:1rem;">Apply to GL Decoder →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: GL Decoder -->
+  <div class="card" id="step-decoder">
+    <div class="card-title">Step 02 — Review GL Deductions</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Entity Type</label>
+        <select id="entity">
+          <option>Sole Prop / Sch. C</option>
+          <option>Single-Member LLC</option>
+          <option>S-Corp</option>
+          <option>Partnership / LLC</option>
+        </select>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- VALUE STRIP -->
-<div class="value-strip">
-  <div class="vp"><span class="vp-icon">🏦</span><span>Upload any bank statement</span></div>
-  <div class="vp-div"></div>
-  <div class="vp"><span class="vp-icon">🤖</span><span>AI maps every line to a <strong>GL category</strong></span></div>
-  <div class="vp-div"></div>
-  <div class="vp"><span class="vp-icon">🛡</span><span><strong>LLC Risk Flag</strong> + Readiness Score</span></div>
-  <div class="vp-div"></div>
-  <div class="vp"><span class="vp-icon">💰</span><span>See your <strong>real tax savings</strong> instantly</span></div>
-</div>
-
-<!-- AD BANNER -->
-<div class="ad-banner" id="adBanner">
-  <div class="ad-copy">
-    <div class="ad-headline">1 month free. Then $97 owns it forever.</div>
-    <div class="ad-sub">The average business owner overpays taxes by <strong>$4,000–$18,000/year</strong> — not from carelessness, but from never having a system that shows them where to look. <strong>Upload once. See it work. Then decide.</strong></div>
-  </div>
-  <button class="ad-cta-mini" onclick="showPaywall()">Get Full Access — $97</button>
-</div>
-
-<!-- ACCESS BAR -->
-<div class="access-bar" id="accessBar">
-  <span class="access-msg">✓ Full access active — <span>unlimited uploads & AI analysis</span></span>
-</div>
-
-<!-- ─── UPLOAD SECTION ─── -->
-<div class="upload-section">
-  <div class="section-label">Step 1 — Upload Your Bank Statement</div>
-  <div class="free-badge" id="freeBadge"><div class="free-dot"></div>1 month free — no credit card required</div>
-  <div class="upload-zone" id="uploadZone">
-    <input type="file" id="fileInput" accept=".csv,.pdf,.txt,.ofx,.qbo" onchange="handleFile(event)">
-    <span class="upload-icon">🏦</span>
-    <div class="upload-title">Drop Your Bank Statement Here</div>
-    <p class="upload-copy">FiscalAI reads your transactions, maps every deductible expense to the correct GL category, and calculates your recovery — <strong>automatically</strong>.</p>
-    <p class="upload-hook">"I found $6,200 I didn't know I could deduct."</p>
-    <div class="fmt-row">
-      <span class="fmt-chip">CSV</span><span class="fmt-chip">PDF</span>
-      <span class="fmt-chip">OFX</span><span class="fmt-chip">QBO</span><span class="fmt-chip">TXT</span>
-    </div>
-    <p class="upload-privacy">🔒 Your data never leaves your browser. Nothing stored or transmitted.</p>
-  </div>
-  <div class="parse-bar" id="parseBar">
-    <div class="parse-status">
-      <div class="parse-spinner" id="parseSpinner"></div>
-      <div>
-        <div class="parse-label" id="parseLabel">Reading your statement...</div>
-        <div class="parse-sub" id="parseSub">Extracting transactions</div>
+      <div class="form-group">
+        <label>Tax Bracket</label>
+        <select id="bracket">
+          <option value="0.22">22%</option>
+          <option value="0.24" selected>24%</option>
+          <option value="0.32">32%</option>
+          <option value="0.35">35%</option>
+          <option value="0.37">37%</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Industry</label>
+        <select id="industry">
+          <option>Property Management / RE</option>
+          <option>Professional Services</option>
+          <option>Tech / SaaS</option>
+          <option>E-Commerce</option>
+          <option>Construction / Trades</option>
+          <option>Other</option>
+        </select>
       </div>
     </div>
-    <div class="parse-track"><div class="parse-fill" id="parseFill"></div></div>
-  </div>
-  <div class="parsed-results" id="parsedResults">
-    <div class="parsed-header">
-      <div class="parsed-title">Your Mapped GL Transactions</div>
-      <div class="pstats">
-        <div class="pstat"><div class="pstat-n" id="statTxns">0</div><div class="pstat-l">Transactions</div></div>
-        <div class="pstat"><div class="pstat-n" id="statMapped">0</div><div class="pstat-l">Deductible</div></div>
-        <div class="pstat"><div class="pstat-n" id="statSpend">$0</div><div class="pstat-l">Total Spend</div></div>
+
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value" id="statTotal">$0</div>
+        <div class="stat-label">Total Deductions</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statSavings">$0</div>
+        <div class="stat-label">Est. Tax Savings</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="statScore">—</div>
+        <div class="stat-label">Sch. C Readiness</div>
       </div>
     </div>
-    <div class="table-scroll">
-      <table class="txn-table">
-        <thead><tr>
-          <th>Date</th><th>Description</th>
-          <th style="text-align:right">Amount</th>
+
+    <div class="gl-grid" id="glGrid"></div>
+
+    <button class="btn-analyze" id="analyzeBtn">Run GL Analysis →</button>
+  </div>
+
+  <!-- Results -->
+  <div class="card" id="results-section">
+    <div class="results-header">Your GL Deduction Report</div>
+
+    <div class="score-ring">
+      <div class="score-circle">
+        <div class="score-num" id="scoreDisplay">0</div>
+        <div class="score-sub">/ 100</div>
+      </div>
+      <div class="score-notes">
+        <p id="scoreComment">Enter your deductions above and run analysis.</p>
+        <p style="font-size:0.78rem; color:var(--muted);">Schedule C Readiness Score — based on documentation coverage and deduction breadth.</p>
+      </div>
+    </div>
+
+    <div id="flagsContainer"></div>
+
+    <table class="breakdown-table" id="breakdownTable">
+      <thead>
+        <tr>
           <th>GL Category</th>
-          <th><span class="th-tooltip" data-tip="How certain the AI is that this transaction belongs in the assigned GL category. High = clear business expense. Medium = likely business, verify. Low = ambiguous — review manually.">Confidence</span></th>
-        </tr></thead>
-        <tbody id="txnBody"></tbody>
-      </table>
-    </div>
-    <div class="apply-bar" id="applyBar">
-      <div class="apply-msg">✓ <span id="mappedMsg">0 transactions mapped</span> — ready to pre-fill your GL Decoder</div>
-      <button class="apply-btn" onclick="applyToDecoder()">Apply to Decoder →</button>
-    </div>
-    <span class="skip-link" onclick="skipUpload()">Skip — I'll enter amounts manually below</span>
-  </div>
-</div>
+          <th>Amount</th>
+          <th>Tax Savings</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="breakdownBody"></tbody>
+    </table>
 
-<!-- STEP 2 -->
-<div class="section-label" style="margin-bottom:20px;">Step 2 — Review & Complete Your GL Deductions</div>
+    <!-- UPGRADE GATE -->
+    <div class="upgrade-gate">
+      <div class="gate-eyebrow">You Just Saw What's Possible</div>
+      <div class="gate-headline">Own the Full System.<br/>Year-Round.</div>
+      <p class="gate-body">This preview maps one month. The Ledger Integrity Agent reconciles every transaction, locks your corporate veil, and delivers a CPA-ready package — automatically, every month.</p>
 
-<!-- PROFILE BAR -->
-<div class="profile-bar">
-  <div class="profile-group">
-    <label>Entity</label>
-    <select id="entityType" onchange="recalc()">
-      <option value="sole_prop">Sole Prop / Sch. C</option>
-      <option value="llc">Single-Member LLC</option>
-      <option value="s_corp">S-Corp</option>
-      <option value="partnership">Partnership / LLC</option>
-    </select>
-  </div>
-  <div class="profile-group">
-    <label>Tax Bracket</label>
-    <select id="taxRate" onchange="recalc()">
-      <option value="0.22">22%</option>
-      <option value="0.24" selected>24%</option>
-      <option value="0.32">32%</option>
-      <option value="0.35">35%</option>
-      <option value="0.37">37%</option>
-    </select>
-  </div>
-  <div class="profile-group">
-    <label>Industry</label>
-    <select id="industry" onchange="updateMissing()">
-      <option value="pm">Property Management / RE</option>
-      <option value="services">Professional Services</option>
-      <option value="tech">Tech / SaaS</option>
-      <option value="ecomm">E-Commerce</option>
-      <option value="construction">Construction / Trades</option>
-      <option value="other">Other</option>
-    </select>
-  </div>
-  <div class="found-badge" id="foundBadge">✓ <span id="foundCount">0</span> deductions entered</div>
-</div>
+      <ul class="feature-list">
+        <li>Unlimited CSV uploads — all 12 months</li>
+        <li>IRS-compliant GL mapping across 10 deduction buckets</li>
+        <li>Snap &amp; Scrap receipt vault with transaction matching</li>
+        <li>LLC Veil Report — corporate defense, documented</li>
+        <li>3-tier risk flagging: Recoverable · At Risk · High Exposure</li>
+        <li>CPA-ready monthly report + multi-tab Excel export</li>
+        <li>Reconstructed Expense Memos for missing receipts</li>
+      </ul>
 
-<!-- MAIN LAYOUT -->
-<div class="layout">
-  <div id="categories"></div>
-  <!-- REFINEMENT 2: sidebar-col wrapper for sticky -->
-  <div class="sidebar-col">
-    <div class="summary-card">
-      <div class="summary-title">GL Summary</div>
-      <div id="summaryRows"></div>
-      <div class="summary-divider"></div>
-      <div class="summary-total-row">
-        <span class="summary-total-label">Total</span>
-        <span class="summary-total-num" id="sidebarTotal">$0</span>
+      <div class="price-display">
+        <div class="price-amount">$27</div><span class="price-period">/month</span>
+        <div class="price-note">Founding Member Rate · First 50 Only</div>
       </div>
-      <div class="tax-rate-row">
-        <span class="tax-est-label">Est. Tax Savings</span>
-        <span class="tax-est-num" id="sidebarSave">$0</span>
-      </div>
+
+      <a href="https://fiscalai.org" class="btn-upgrade" target="_blank">Get Full Access at fiscalai.org →</a>
+      <div class="gate-sub">Cancel anytime · Instant access · Zero manual entry</div>
     </div>
-    <div class="missing-card">
-      <div class="missing-title">⚡ Likely Missed</div>
-      <div id="missingItems"></div>
-    </div>
-    <button class="ai-btn" id="aiBtn" onclick="runAnalysis()">🔍 Run Full GL Analysis</button>
-    <button class="upgrade-btn" onclick="showPaywall()">Unlock Full Access — $97</button>
   </div>
+
 </div>
 
-<!-- AI ANALYSIS PANEL -->
-<div class="ai-panel" id="aiPanel">
-  <div class="ai-panel-head">
-    <div class="ai-badge">FiscalAI Analysis</div>
-    <div class="ai-panel-title">Your Personalized Deduction Report</div>
+<!-- ─── FOOTER ───────────────────────────────────────── -->
+<footer>
+  <div style="margin-bottom:0.5rem;">
+    <span class="logo" style="font-size:0.9rem;">FISCALAI</span>
   </div>
-
-  <!-- REFINEMENT 5: Schedule C Readiness Score -->
-  <div class="readiness-block" id="readinessBlock">
-    <div class="readiness-ring-wrap">
-      <svg viewBox="0 0 80 80"><circle class="r-track" cx="40" cy="40" r="35"/><circle class="r-fill" id="rFill" cx="40" cy="40" r="35"/></svg>
-      <div class="readiness-num" id="readinessNum">—</div>
-    </div>
-    <div class="readiness-info">
-      <div class="readiness-label">Schedule C Readiness Score</div>
-      <div class="readiness-grade" id="readinessGrade">Calculating...</div>
-      <div class="readiness-sub" id="readinessSub">Based on your documentation completeness and deduction coverage.</div>
-    </div>
-  </div>
-
-  <!-- REFINEMENT 4: LLC Risk Flag -->
-  <div class="llc-flag" id="llcFlag">
-    <div class="llc-flag-head">
-      <span class="llc-flag-icon">🚨</span>
-      <span class="llc-flag-title">Entity Liability Risk Flag</span>
-      <span class="llc-flag-badge">CHECK</span>
-    </div>
-    <div class="llc-flag-body" id="llcFlagBody">
-      Analyzing your transactions for personal expenses that may threaten your corporate veil...
-    </div>
-    <div class="llc-items" id="llcItems"></div>
-  </div>
-
-  <div class="ai-spinner" id="aiSpinner"></div>
-  <div class="ai-text" id="aiText"></div>
-  <div class="action-strip" id="actionStrip" style="display:none">
-    <button class="action-chip" onclick="showPaywall()">🔓 Get Full Access — $97</button>
-    <button class="action-chip" onclick="window.open('https://yourfiscalmentor.gumroad.com/l/cjiko','_blank')">📋 Book Tax Rescue — $97</button>
-    <button class="action-chip" onclick="window.print()">🖨 Print Report</button>
-    <button class="action-chip" onclick="resetAll()">↺ Start Over</button>
-  </div>
-</div>
-
-</div><!-- /page -->
+  <p>Deduction Decoder is a free preview tool. For full audit-grade reconciliation, visit <a href="https://fiscalai.org" target="_blank">fiscalai.org</a>.</p>
+  <p style="margin-top:0.5rem;">© 2026 FiscalAI. All rights reserved.</p>
+</footer>
 
 <script>
-const MILEAGE = 0.70;
-const vals = {}, sliders = {};
-let hasAccess = false;
-let uploadUsed = false;
-let pendingFile = null;
-let capturedEmail = '';
-
-// ─── EMAIL GATE (REFINEMENT 8) ───
-function showEmailGate() {
-  document.getElementById('emailGate').classList.add('show');
-  document.body.style.overflow = 'hidden';
-  setTimeout(() => document.getElementById('gateEmail').focus(), 400);
-}
-function submitEmailGate() {
-  const email = document.getElementById('gateEmail').value.trim();
-  if (!email || !email.includes('@')) {
-    document.getElementById('gateEmail').style.borderColor = 'var(--red)';
-    document.getElementById('gateEmail').focus();
-    return;
-  }
-  capturedEmail = email;
-  document.getElementById('emailGate').classList.remove('show');
-  document.body.style.overflow = '';
-  // Now run the actual parse
-  if (pendingFile) {
-    animateParse(pendingFile);
-  }
-}
-document.getElementById('gateEmail').addEventListener('keydown', e => {
-  if (e.key === 'Enter') submitEmailGate();
-});
-
-// ─── PAYWALL ───
-function showPaywall() {
-  document.getElementById('paywallOverlay').classList.add('show');
-  document.body.style.overflow = 'hidden';
-}
-function closePaywall() {
-  document.getElementById('paywallOverlay').classList.remove('show');
-  document.body.style.overflow = '';
-}
-function unlockAccess() {
-  window.location.href = 'https://buy.stripe.com/6oU28rgeb8M1cWUb1P8k800';
-}
-
-// ─── UPLOAD ───
-const uploadZone = document.getElementById('uploadZone');
-uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
-uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
-uploadZone.addEventListener('drop', e => {
-  e.preventDefault(); uploadZone.classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) processFile(file);
-});
-function handleFile(e) {
-  const file = e.target.files[0];
-  if (file) processFile(file);
-}
-function processFile(file) {
-  if (!hasAccess && uploadUsed) { showPaywall(); return; }
-  uploadUsed = true;
-  pendingFile = file;
-  if (hasAccess) {
-    animateParse(file); // bypass email gate for paid users
-  } else {
-    showEmailGate();
-  }
-}
-
-function animateParse(file) {
-  document.getElementById('parseBar').classList.add('show');
-  document.getElementById('parsedResults').classList.remove('show');
-  const steps = [
-    {pct:20,label:'Reading your statement...',sub:'Parsing file format'},
-    {pct:42,label:'Extracting transactions...',sub:'Identifying debits and credits'},
-    {pct:65,label:'Running AI GL classification...',sub:'Mapping to deduction categories'},
-    {pct:85,label:'Calculating deductibles...',sub:'Applying IRS rules'},
-    {pct:100,label:'Analysis complete',sub:'Transactions mapped successfully'},
+  // ─── GL CATEGORIES ──────────────────────────────────
+  const GL_CATEGORIES = [
+    { id: 'advertising',    label: 'Advertising & Marketing' },
+    { id: 'auto',           label: 'Auto & Transportation' },
+    { id: 'meals',          label: 'Meals & Entertainment' },
+    { id: 'office',         label: 'Office Supplies' },
+    { id: 'professional',   label: 'Professional Services' },
+    { id: 'rent',           label: 'Rent & Facilities' },
+    { id: 'software',       label: 'Software & Subscriptions' },
+    { id: 'travel',         label: 'Travel & Lodging' },
+    { id: 'utilities',      label: 'Utilities & Phone' },
+    { id: 'other',          label: 'Other Business Expenses' },
   ];
-  let i = 0;
-  const fill = document.getElementById('parseFill');
-  const label = document.getElementById('parseLabel');
-  const sub = document.getElementById('parseSub');
-  const spinner = document.getElementById('parseSpinner');
-  const interval = setInterval(() => {
-    if (i >= steps.length) {
-      clearInterval(interval);
-      spinner.classList.add('done');
-      setTimeout(() => readAndParse(file), 350);
-      return;
-    }
-    const s = steps[i]; fill.style.width = s.pct+'%'; label.textContent = s.label; sub.textContent = s.sub;
-    i++;
-  }, 480);
-}
 
-async function readAndParse(file) {
-  // REFINEMENT 3: robust PDF fallback
-  let content = '';
-  let isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-  
-  if (!isPDF) {
-    try {
-      content = await file.text();
-    } catch(e) {
-      content = '';
-    }
-  }
+  // ─── GL KEYWORD MAP ──────────────────────────────────
+  const GL_KEYWORDS = {
+    advertising:  ['ads','facebook','google ads','meta','mailchimp','canva','instagram','marketing','promote','sponsor'],
+    auto:         ['uber','lyft','gas','fuel','shell','chevron','exxon','bp','parking','toll','mileage','auto','car'],
+    meals:        ['restaurant','cafe','coffee','starbucks','doordash','grubhub','uber eats','food','dining','lunch','dinner'],
+    office:       ['staples','office depot','amazon','supplies','postage','usps','fedex','ups','printer','ink'],
+    professional: ['attorney','lawyer','accountant','cpa','consultant','advisor','freelance','contractor','fiverr','upwork'],
+    rent:         ['rent','lease','storage','coworking','wework','regus','office space','airbnb'],
+    software:     ['netflix','spotify','adobe','slack','zoom','dropbox','notion','github','aws','stripe','shopify','saas','software','subscription'],
+    travel:       ['hotel','marriott','hilton','airline','delta','united','southwest','airfare','flight','hotel','expedia'],
+    utilities:    ['at&t','verizon','comcast','electric','water','internet','phone','utility','pg&e','xcel'],
+    other:        [],
+  };
 
-  // If PDF, empty, binary garbage, or too short — use intelligent demo data
-  const isReadable = content.length > 80 && content.includes(',') && !isPDF;
-  const transactions = isReadable ? parseCSV(content) : generateDemoTransactions();
-  await classifyWithAI(transactions);
-}
-
-function parseCSV(text) {
-  const lines = text.trim().split('\n').filter(l => l.trim());
-  if (lines.length < 2) return generateDemoTransactions();
-  const txns = [];
-  for (let i = 1; i < Math.min(lines.length, 60); i++) {
-    const cols = lines[i].split(',').map(c => c.replace(/"/g,'').trim());
-    if (cols.length < 3) continue;
-    let amt = 0, desc = '', date = '';
-    for (let j = 0; j < cols.length; j++) {
-      const num = parseFloat(cols[j].replace(/[$,]/g,''));
-      if (!isNaN(num) && Math.abs(num) > 0.5 && Math.abs(num) < 50000) amt = num;
-      if (/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(cols[j])) date = cols[j];
-      if (cols[j].length > 5 && isNaN(parseFloat(cols[j].replace(/[$,]/g,'')))) {
-        if (j > 0) desc = cols[j];
+  function classifyTransaction(description) {
+    const d = description.toLowerCase();
+    for (const [cat, keywords] of Object.entries(GL_KEYWORDS)) {
+      if (keywords.some(k => d.includes(k))) {
+        return { category: cat, confidence: 'high' };
       }
     }
-    if (amt !== 0 && desc) txns.push({date: date||'2025', desc, amt: Math.abs(amt)});
+    // Partial heuristics
+    if (/\d{4}/.test(d)) return { category: 'other', confidence: 'low' };
+    return { category: 'other', confidence: 'med' };
   }
-  return txns.length > 3 ? txns : generateDemoTransactions();
-}
 
-function generateDemoTransactions() {
-  return [
-    {date:'01/04/25',desc:'ADOBE CREATIVE CLOUD',amt:54.99},
-    {date:'01/06/25',desc:'GODADDY DOMAINS & HOSTING',amt:22.17},
-    {date:'01/08/25',desc:'DELTA AIRLINES TICKET',amt:387.00},
-    {date:'01/09/25',desc:'MARRIOTT HOTELS',amt:214.50},
-    {date:'01/10/25',desc:'UBER EATS - CLIENT DINNER',amt:89.40},
-    {date:'01/12/25',desc:'APOLLO.IO SUBSCRIPTION',amt:99.00},
-    {date:'01/13/25',desc:'NETFLIX PERSONAL',amt:22.99},  // personal — corporate veil test
-    {date:'01/14/25',desc:'CANVA PRO',amt:16.99},
-    {date:'01/15/25',desc:'BLUE CROSS INSURANCE PREMIUM',amt:412.00},
-    {date:'01/16/25',desc:'WHOLE FOODS GROCERIES',amt:187.40},  // personal — veil test
-    {date:'01/17/25',desc:'STAPLES OFFICE SUPPLY',amt:67.23},
-    {date:'01/18/25',desc:'QUICKBOOKS ONLINE',amt:30.00},
-    {date:'01/20/25',desc:'ZOOM VIDEO COMMUNICATIONS',amt:15.99},
-    {date:'01/22/25',desc:'GOOGLE WORKSPACE',amt:12.00},
-    {date:'01/23/25',desc:'COURSERA SUBSCRIPTION',amt:59.00},
-    {date:'01/24/25',desc:'AT&T WIRELESS BILL',amt:180.00},
-    {date:'01/25/25',desc:'AMAZON WEB SERVICES',amt:43.28},
-    {date:'01/27/25',desc:'NOTARY / LEGAL FILING FEE',amt:125.00},
-    {date:'01/28/25',desc:'LINKEDIN PREMIUM',amt:39.99},
-    {date:'01/29/25',desc:'STARBUCKS - CLIENT MTG',amt:24.50},
-  ];
-}
+  // ─── BUILD GL GRID ───────────────────────────────────
+  const glGrid = document.getElementById('glGrid');
+  GL_CATEGORIES.forEach(cat => {
+    const row = document.createElement('div');
+    row.className = 'gl-row';
+    row.innerHTML = `
+      <span class="gl-label">${cat.label}</span>
+      <input class="gl-input" type="number" id="gl_${cat.id}" placeholder="0.00" min="0" step="0.01" />
+    `;
+    glGrid.appendChild(row);
+  });
 
-const CAT_MAP = {
-  'tech':       {icon:'💻', label:'Technology & Software', field:'t_soft'},
-  'marketing':  {icon:'📣', label:'Marketing & Advertising', field:'mk_tools'},
-  'travel':     {icon:'🚗', label:'Vehicle & Travel', field:'v_air'},
-  'hotel':      {icon:'🚗', label:'Vehicle & Travel', field:'v_hotel'},
-  'meals':      {icon:'🍽', label:'Meals & Entertainment', field:'m_client'},
-  'health':     {icon:'💊', label:'Health Insurance', field:'h_health'},
-  'office':     {icon:'📋', label:'Office Supplies', field:'t_hard'},
-  'professional':{icon:'⚖️', label:'Professional Services', field:'p_legal'},
-  'education':  {icon:'📚', label:'Education & Dev.', field:'e_courses'},
-  'phone':      {icon:'💻', label:'Technology & Software', field:'t_phone'},
-  'banking':    {icon:'⚖️', label:'Professional Services', field:'p_acct'},
-  'other':      {icon:'📋', label:'Other Business', field:'t_soft'},
-  'personal':   {icon:'🚫', label:'Personal — Not Deductible', field:null},
-};
+  // ─── LIVE TOTALS ─────────────────────────────────────
+  function getTotal() {
+    return GL_CATEGORIES.reduce((sum, cat) => {
+      const val = parseFloat(document.getElementById(`gl_${cat.id}`).value) || 0;
+      return sum + val;
+    }, 0);
+  }
 
-async function classifyWithAI(transactions) {
-  const txnList = transactions.map((t,i) => `${i+1}. ${t.date} | ${t.desc} | $${t.amt.toFixed(2)}`).join('\n');
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
-        model:"claude-sonnet-4-20250514", max_tokens:1200,
-        system:"You are a tax GL classification engine. Respond ONLY with valid JSON — no markdown, no explanation, no backticks.",
-        messages:[{role:"user", content:`Classify each transaction as a business deduction category. Return ONLY a JSON array.
+  function getBracket() {
+    return parseFloat(document.getElementById('bracket').value) || 0.24;
+  }
 
-Transactions:
-${txnList}
+  function calcScore(total) {
+    const filled = GL_CATEGORIES.filter(cat => (parseFloat(document.getElementById(`gl_${cat.id}`).value) || 0) > 0).length;
+    const coverage = (filled / GL_CATEGORIES.length) * 60;
+    const amount = Math.min(total / 500, 1) * 40;
+    return Math.round(coverage + amount);
+  }
 
-For each return: {"i":<1-based index>,"cat":"<category>","conf":"<high|mid|low>","deductible":<true|false>,"veil_risk":<true|false>}
-
-Categories: tech, marketing, travel, hotel, meals, health, office, professional, education, phone, banking, other, personal
-- deductible:false for personal expenses (groceries, Netflix personal, gym, personal clothing, etc.)
-- veil_risk:true if a PERSONAL expense appears to have been run through a business account (threatens LLC corporate veil)
-Return ONLY the JSON array.`}]
-      })
+  document.querySelectorAll('.gl-input').forEach(input => {
+    input.addEventListener('input', () => {
+      const total = getTotal();
+      const savings = total * getBracket();
+      document.getElementById('statTotal').textContent = '$' + total.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('statSavings').textContent = '$' + savings.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+      document.getElementById('statScore').textContent = calcScore(total);
     });
-    const data = await res.json();
-    let text = data.content?.[0]?.text || '[]';
-    text = text.replace(/```json|```/g,'').trim();
-    let classified = [];
-    try { classified = JSON.parse(text); } catch(e) { classified = []; }
-    renderTransactions(transactions, classified);
-  } catch(e) {
-    const fallback = transactions.map((t,i) => ({
-      i: i+1, cat: guessCategory(t.desc),
-      conf: 'mid', deductible: !isPersonal(t.desc), veil_risk: isPersonal(t.desc)
-    }));
-    renderTransactions(transactions, fallback);
-  }
-}
-
-function isPersonal(desc) {
-  return /NETFLIX|HULU|SPOTIFY|GROCERY|WHOLE FOODS|TARGET|WALMART|GYM|FITNESS|PERSONAL|CLOTHING|RESTAURANT PERSONAL/i.test(desc);
-}
-
-function guessCategory(desc) {
-  desc = desc.toUpperCase();
-  if (isPersonal(desc)) return 'personal';
-  if (/ADOBE|ZOOM|GOOGLE|QUICKBOOKS|APOLLO|CANVA|AWS|LINKEDIN|MICROSOFT|SLACK/.test(desc)) return 'tech';
-  if (/DELTA|UNITED|AMERICAN AIR|SOUTHWEST|LYFT|UBER(?!.*EATS)/.test(desc)) return 'travel';
-  if (/MARRIOTT|HILTON|HYATT|AIRBNB|HOTEL/.test(desc)) return 'hotel';
-  if (/EATS|GRUBHUB|DINNER|LUNCH|STARBUCKS/.test(desc)) return 'meals';
-  if (/INSURANCE|BLUE CROSS|AETNA|CIGNA/.test(desc)) return 'health';
-  if (/STAPLES|OFFICE DEPOT/.test(desc)) return 'office';
-  if (/LEGAL|NOTARY|ATTORNEY|FILING/.test(desc)) return 'professional';
-  if (/COURSERA|UDEMY|COURSE|BOOK/.test(desc)) return 'education';
-  if (/AT&T|VERIZON|T-MOBILE|WIRELESS/.test(desc)) return 'phone';
-  return 'other';
-}
-
-function renderTransactions(txns, classified) {
-  document.getElementById('parseBar').classList.remove('show');
-  const results = document.getElementById('parsedResults');
-  results.classList.add('show');
-  let mapped = 0, totalSpend = 0;
-  const catAmounts = {};
-  const classMap = {};
-  const veilRisks = [];
-  classified.forEach(c => { classMap[c.i] = c; });
-
-  let html = '';
-  txns.forEach((t, idx) => {
-    const cl = classMap[idx+1] || {cat:'other', conf:'low', deductible:true, veil_risk:false};
-    const info = CAT_MAP[cl.cat] || CAT_MAP['other'];
-    // REFINEMENT 6: Confidence badge
-    const confClass = cl.conf==='high'?'conf-high':cl.conf==='mid'?'conf-mid':'conf-low';
-    const confLabel = cl.conf==='high'?'High':cl.conf==='mid'?'Medium':'Low';
-
-    if (cl.deductible !== false) {
-      mapped++;
-      totalSpend += t.amt;
-      if (info.field) catAmounts[info.field] = (catAmounts[info.field]||0) + t.amt;
-      html += `<tr>
-        <td class="txn-date">${t.date}</td>
-        <td class="txn-desc">${t.desc}</td>
-        <td class="txn-amt">-$${t.amt.toFixed(2)}</td>
-        <td><span class="cat-pill mapped">${info.icon} ${info.label}</span></td>
-        <td><span class="conf-badge ${confClass}">${confLabel}</span></td>
-      </tr>`;
-    } else {
-      if (cl.veil_risk) veilRisks.push({desc: t.desc, amt: t.amt});
-      html += `<tr style="opacity:0.45">
-        <td class="txn-date">${t.date}</td>
-        <td class="txn-desc">${t.desc}</td>
-        <td class="txn-amt">-$${t.amt.toFixed(2)}</td>
-        <td><span class="cat-pill">🚫 Personal</span></td>
-        <td><span class="conf-badge conf-low">${confLabel}</span></td>
-      </tr>`;
-    }
   });
 
-  document.getElementById('txnBody').innerHTML = html;
-  document.getElementById('statTxns').textContent = txns.length;
-  document.getElementById('statMapped').textContent = mapped;
-  document.getElementById('statSpend').textContent = '$'+Math.round(totalSpend).toLocaleString();
-  document.getElementById('mappedMsg').textContent = mapped+' deductible transactions mapped';
-  document.getElementById('applyBar').classList.add('show');
-  window._pendingAmounts = catAmounts;
-  window._veilRisks = veilRisks;
-}
+  // ─── ANALYZE ─────────────────────────────────────────
+  document.getElementById('analyzeBtn').addEventListener('click', () => {
+    const total = getTotal();
+    const bracket = getBracket();
+    const savings = total * bracket;
+    const score = calcScore(total);
 
-function applyToDecoder() {
-  const amounts = window._pendingAmounts || {};
-  let applied = 0;
-  Object.entries(amounts).forEach(([field, amount]) => {
-    const el = document.getElementById('inp_'+field);
-    if (el) {
-      const existing = parseFloat(el.value)||0;
-      el.value = (existing+amount).toFixed(2);
-      el.classList.add('prefilled');
-      vals[field] = existing+amount;
-      applied++;
-      const card = el.closest('.cat-card');
-      if (card) card.classList.add('open');
+    // Score display
+    document.getElementById('scoreDisplay').textContent = score;
+
+    let comment = '';
+    if (score >= 80) comment = 'Strong deduction coverage. Your GL is structured for audit defense.';
+    else if (score >= 55) comment = 'Moderate coverage. Several categories are underdocumented — gaps the IRS notices.';
+    else comment = 'Low coverage detected. Significant deduction exposure. A full reconciliation is overdue.';
+    document.getElementById('scoreComment').textContent = comment;
+
+    // Flags
+    const flags = document.getElementById('flagsContainer');
+    flags.innerHTML = '';
+
+    const meals = parseFloat(document.getElementById('gl_meals').value) || 0;
+    const auto  = parseFloat(document.getElementById('gl_auto').value) || 0;
+    const entity = document.getElementById('entity').value;
+
+    if (meals > 500) {
+      flags.innerHTML += `<div class="flag-box warning"><div class="flag-title">⚠ Meals & Entertainment — Documentation Gap Risk</div>Meals over $500/month require per-receipt substantiation. Bulk totals without receipts are a common audit trigger.</div>`;
     }
-  });
-  recalc();
-  document.getElementById('applyBar').innerHTML = `<div class="apply-msg">✅ <span>${applied} GL categories pre-filled from your statement.</span></div>`;
-  document.querySelector('.skip-link').style.display = 'none';
-  setTimeout(() => document.getElementById('categories').scrollIntoView({behavior:'smooth',block:'start'}), 300);
-}
+    if (auto > 300 && entity.includes('LLC')) {
+      flags.innerHTML += `<div class="flag-box danger"><div class="flag-title">🚨 LLC Veil Risk — Personal/Business Auto Commingling</div>Auto expenses on an LLC without a mileage log or dedicated business vehicle documentation threaten corporate veil integrity.</div>`;
+    }
+    if (score >= 75) {
+      flags.innerHTML += `<div class="flag-box safe"><div class="flag-title">✓ Deduction Coverage — Above Threshold</div>Your category spread signals a well-maintained GL. CPA handoff should be clean.</div>`;
+    }
 
-function skipUpload() {
-  document.getElementById('parsedResults').classList.remove('show');
-  document.getElementById('parseBar').classList.remove('show');
-}
-
-// ─── CATEGORIES ───
-const CATEGORIES = [
-  {id:"home",icon:"🏠",name:"Home Office",hint:"Rent/mortgage ratio deduction",lines:[
-    {id:"ho_sqft",label:"Office square footage",sub:"Your dedicated business space only",type:"sqft"},
-    {id:"ho_home",label:"Total home square footage",sub:"Full home — ratio auto-calculates",type:"sqft_total"},
-    {id:"ho_rent",label:"Annual rent or mortgage interest",sub:"Business % applied automatically",pct:"ho",type:"dollar"},
-    {id:"ho_util",label:"Annual utilities (electric, internet, gas)",sub:"Business-use portion auto-calculated",pct:"ho",type:"dollar"},
-  ]},
-  {id:"vehicle",icon:"🚗",name:"Vehicle & Travel",hint:"Mileage, flights, hotels",lines:[
-    {id:"v_miles",label:"Business miles driven in 2025",sub:"Client visits, errands · IRS $0.70/mi",type:"miles"},
-    {id:"v_air",label:"Business airfare & ground transport",sub:"100% deductible",pct:100,type:"dollar"},
-    {id:"v_hotel",label:"Hotel & lodging — business trips",sub:"100% deductible",pct:100,type:"dollar"},
-    {id:"v_meals",label:"Meals while traveling overnight",sub:"50% deductible",pct:50,type:"dollar"},
-  ]},
-  {id:"meals",icon:"🍽",name:"Meals & Entertainment",hint:"Client meals and business dining",lines:[
-    {id:"m_client",label:"Client & prospect meals",sub:"Business discussion required — 50%",pct:50,type:"dollar"},
-    {id:"m_team",label:"Team meals & office food",sub:"50% deductible",pct:50,type:"dollar"},
-  ]},
-  {id:"tech",icon:"💻",name:"Technology & Software",hint:"Tools, subscriptions, hardware",lines:[
-    {id:"t_soft",label:"Software subscriptions (annual)",sub:"SaaS, AI tools, CRM — 100%",pct:100,type:"dollar"},
-    {id:"t_hard",label:"Hardware — laptop, monitor, equipment",sub:"Section 179 — 100% first-year",pct:100,type:"dollar"},
-    {id:"t_phone",label:"Phone bill (business portion)",sub:"Slide to set your business-use %",pct:"slider",type:"dollar_slider",defaultPct:65},
-  ]},
-  {id:"marketing",icon:"📣",name:"Marketing & Advertising",hint:"All promotional spend",lines:[
-    {id:"mk_ads",label:"Digital advertising (Google, Meta)",sub:"100% deductible",pct:100,type:"dollar"},
-    {id:"mk_design",label:"Design, branding, photography",sub:"100% deductible",pct:100,type:"dollar"},
-    {id:"mk_tools",label:"Marketing platforms & tools",sub:"Email, Apollo, CRM — 100%",pct:100,type:"dollar"},
-  ]},
-  {id:"pro",icon:"⚖️",name:"Professional Services",hint:"Legal, accounting, consulting",lines:[
-    {id:"p_legal",label:"Legal fees",sub:"Business matters only — 100%",pct:100,type:"dollar"},
-    {id:"p_acct",label:"Accounting & bookkeeping",sub:"100% deductible",pct:100,type:"dollar"},
-    {id:"p_consult",label:"Consulting & advisory fees",sub:"100% deductible",pct:100,type:"dollar"},
-  ]},
-  {id:"edu",icon:"📚",name:"Education & Development",hint:"Courses, books, coaching",lines:[
-    {id:"e_courses",label:"Online courses & certifications",sub:"Must relate to current business — 100%",pct:100,type:"dollar"},
-    {id:"e_books",label:"Books, journals & subscriptions",sub:"Business-relevant — 100%",pct:100,type:"dollar"},
-    {id:"e_coach",label:"Business coaching & masterminds",sub:"100% deductible",pct:100,type:"dollar"},
-  ]},
-  {id:"health",icon:"💊",name:"Health Insurance & HSA",hint:"Self-employed deductions",lines:[
-    {id:"h_health",label:"Health insurance premiums",sub:"Self-employed 100% above-the-line",pct:100,type:"dollar"},
-    {id:"h_hsa",label:"HSA contributions",sub:"2025: $4,300 self / $8,550 family",pct:100,type:"dollar"},
-  ]},
-  {id:"retire",icon:"📈",name:"Retirement Contributions",hint:"SEP-IRA, Solo 401(k)",lines:[
-    {id:"r_sep",label:"SEP-IRA contributions",sub:"Up to 25% of net self-employment income",pct:100,type:"dollar"},
-    {id:"r_401e",label:"Solo 401(k) — employee contribution",sub:"Up to $23,000 in 2025",pct:100,type:"dollar"},
-    {id:"r_401r",label:"Solo 401(k) — employer contribution",sub:"Up to 25% of compensation",pct:100,type:"dollar"},
-  ]},
-  {id:"contractors",icon:"🤝",name:"Contractors & Labor",hint:"Freelancers and subcontractors",lines:[
-    {id:"c_free",label:"Freelancer & contractor payments",sub:"Issue 1099 for $600+ — 100%",pct:100,type:"dollar"},
-    {id:"c_staff",label:"Part-time or temp staff wages",sub:"100% payroll expense",pct:100,type:"dollar"},
-  ]},
-];
-
-const MISSING = {
-  pm:["PM software (AppFolio, Yardi) — 100%","Tenant screening fees","Reserve fund contributions","Landlord association memberships","Equipment depreciation (Section 179)"],
-  services:["Professional liability & E&O insurance","Bar/license renewal fees","Client gifts up to $25/person/year","Association dues","E-signature & document tools"],
-  tech:["R&D Tax Credit (Form 6765) — often missed","Cloud infrastructure (AWS, GCP)","Patent/IP filing fees","Developer tools & API costs","Domain & hosting fees"],
-  ecomm:["Inventory storage & fulfillment","Product photography & video","Shipping supplies & packaging","Marketplace fees (Amazon, Etsy)","Return processing costs"],
-  construction:["Tools under $2,500 — Section 179 safe harbor","Safety gear & protective equipment","Bonding & license fees","Vehicle wrap advertising","Job site consumables"],
-  other:["Business banking & credit card fees","Trade association dues","Business formation & state filing fees","Business publication subscriptions","Client gifts (up to $25/person/year)"],
-};
-
-function buildUI() {
-  const wrap = document.getElementById('categories');
-  CATEGORIES.forEach(cat => {
-    cat.lines.forEach(l => { vals[l.id]=0; if(l.pct==='slider') sliders[l.id]=l.defaultPct||60; });
-    const card = document.createElement('div');
-    card.className = 'cat-card'; card.id = 'card_'+cat.id;
-    let rows = '';
-    cat.lines.forEach(l => {
-      if (l.type==='sqft'||l.type==='sqft_total') {
-        rows+=`<div class="ded-row"><div><div class="ded-label">${l.label}</div><div class="ded-sublabel">${l.sub}</div></div>
-          <div class="ded-input-wrap"><span class="pfx pfx-sm">sqft</span>
-          <input type="number" class="ded-input" id="inp_${l.id}" placeholder="0" min="0" oninput="sv('${l.id}',this.value);recalc()"></div>
-          <div><div class="ded-deductible zero" id="ded_${l.id}">—</div></div></div>`;
-      } else if (l.type==='miles') {
-        rows+=`<div class="ded-row"><div><div class="ded-label">${l.label}</div><div class="ded-sublabel">${l.sub}</div></div>
-          <div class="ded-input-wrap"><span class="pfx pfx-sm">mi</span>
-          <input type="number" class="ded-input" id="inp_${l.id}" placeholder="0" min="0" oninput="sv('${l.id}',this.value);recalc()"></div>
-          <div><div class="ded-deductible zero" id="ded_${l.id}">$0</div><div class="ded-pct">×$0.70</div></div></div>`;
-      } else if (l.type==='dollar_slider') {
-        const dp=l.defaultPct||60;
-        rows+=`<div class="ded-row" style="grid-template-columns:1fr 124px 80px">
-          <div><div class="ded-label">${l.label}</div><div class="ded-sublabel">${l.sub}</div></div>
-          <div class="ded-input-wrap"><span class="pfx">$</span>
-          <input type="number" class="ded-input" id="inp_${l.id}" placeholder="0" min="0" oninput="sv('${l.id}',this.value);recalc()"></div>
-          <div><div class="ded-deductible zero" id="ded_${l.id}">$0</div><div class="ded-pct" id="pct_${l.id}">${dp}%</div></div></div>
-          <div class="slider-wrap">
-          <input type="range" class="pct-slider" min="0" max="100" value="${dp}" id="sld_${l.id}" oninput="setSld('${l.id}',this.value);recalc()">
-          <div class="pct-display" id="sldD_${l.id}">${dp}%</div></div>`;
-      } else {
-        const pl = typeof l.pct==='number'?l.pct+'%':'';
-        rows+=`<div class="ded-row"><div><div class="ded-label">${l.label}</div><div class="ded-sublabel">${l.sub}</div></div>
-          <div class="ded-input-wrap"><span class="pfx">$</span>
-          <input type="number" class="ded-input" id="inp_${l.id}" placeholder="0" min="0" oninput="sv('${l.id}',this.value);recalc()"></div>
-          <div><div class="ded-deductible zero" id="ded_${l.id}">$0</div><div class="ded-pct">${pl}</div></div></div>`;
+    // Breakdown table
+    const tbody = document.getElementById('breakdownBody');
+    tbody.innerHTML = '';
+    GL_CATEGORIES.forEach(cat => {
+      const val = parseFloat(document.getElementById(`gl_${cat.id}`).value) || 0;
+      if (val > 0) {
+        const catSavings = val * bracket;
+        const status = val > 1000 ? '⚠ Verify Docs' : '✓ Documented';
+        tbody.innerHTML += `<tr><td>${cat.label}</td><td>$${val.toLocaleString()}</td><td>$${catSavings.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}</td><td>${status}</td></tr>`;
       }
     });
-    card.innerHTML=`
-      <div class="cat-header" onclick="toggle('${cat.id}')">
-        <div class="cat-icon">${cat.icon}</div>
-        <div class="cat-info"><div class="cat-name">${cat.name}</div><div class="cat-hint">${cat.hint}</div></div>
-        <div class="cat-right"><div class="cat-total-amt zero" id="ct_${cat.id}">$0</div><div class="cat-total-lbl">deductible</div></div>
-        <div class="chevron">▼</div></div>
-      <div class="cat-body">${rows}</div>`;
-    wrap.appendChild(card);
-  });
-  buildSummary(); updateMissing();
-}
 
-function toggle(id){document.getElementById('card_'+id).classList.toggle('open');}
-function sv(id,v){vals[id]=parseFloat(v)||0;}
-function setSld(id,v){sliders[id]=parseInt(v);document.getElementById('pct_'+id).textContent=v+'%';document.getElementById('sldD_'+id).textContent=v+'%';}
-function hoPct(){const s=vals['ho_sqft']||0,t=vals['ho_home']||1;return t>0?Math.min(s/t,0.30):0;}
-function lineDed(l){
-  const v=vals[l.id]||0;
-  if(l.type==='sqft'||l.type==='sqft_total') return 0;
-  if(l.type==='miles') return v*MILEAGE;
-  if(l.pct==='ho') return v*hoPct();
-  if(l.type==='dollar_slider') return v*((sliders[l.id]||60)/100);
-  if(typeof l.pct==='number') return v*(l.pct/100);
-  return v;
-}
-
-function recalc(){
-  let grand=0,filled=0;
-  CATEGORIES.forEach(cat=>{
-    let ct=0;
-    cat.lines.forEach(l=>{
-      const d=lineDed(l);ct+=d;
-      if(vals[l.id]>0) filled++;
-      const el=document.getElementById('ded_'+l.id);
-      if(!el||l.type==='sqft'||l.type==='sqft_total') return;
-      el.textContent='$'+Math.round(d).toLocaleString();
-      el.className='ded-deductible'+(d>0?'':' zero');
-    });
-    grand+=ct;
-    const ce=document.getElementById('ct_'+cat.id);
-    if(ce){ce.textContent='$'+Math.round(ct).toLocaleString();ce.className='cat-total-amt'+(ct>0?'':' zero');}
-  });
-  document.getElementById('grandTotal').textContent='$'+Math.round(grand).toLocaleString();
-  document.getElementById('sidebarTotal').textContent='$'+Math.round(grand).toLocaleString();
-  const rate=parseFloat(document.getElementById('taxRate').value)||0.24;
-  const saved=Math.round(grand*rate);
-  document.getElementById('taxSave').textContent='≈ $'+saved.toLocaleString()+' in tax savings';
-  document.getElementById('taxSave').className='tax-save'+(grand>0?' show':'');
-  document.getElementById('sidebarSave').textContent='$'+saved.toLocaleString();
-  document.getElementById('foundCount').textContent=filled;
-  document.getElementById('foundBadge').className='found-badge'+(filled>0?' show':'');
-  buildSummary();
-  // Live readiness score in hero
-  updateHeroReadiness(grand, filled);
-}
-
-function updateReadinessTip(grand, filled) {
-  const tip = document.getElementById('rtItems');
-  const footer = document.getElementById('rtFooter');
-  if (!tip) return;
-
-  const checks = [
-    { label: 'Home office sq. footage entered',       done: (vals['ho_sqft']||0) > 0,               pts: '+5 pts' },
-    { label: 'Business miles logged',                  done: (vals['v_miles']||0) > 0,               pts: '+5 pts' },
-    { label: 'Health insurance premiums entered',      done: (vals['h_health']||0) > 0,              pts: '+5 pts' },
-    { label: 'Retirement contribution entered',        done: ((vals['r_sep']||0)+(vals['r_401e']||0)) > 0, pts: '+5 pts' },
-    { label: 'Software / tech expenses entered',       done: (vals['t_soft']||0) > 0,                pts: 'category' },
-    { label: 'Marketing spend entered',                done: ((vals['mk_ads']||0)+(vals['mk_tools']||0)) > 0, pts: 'category' },
-    { label: 'Professional services entered',          done: ((vals['p_legal']||0)+(vals['p_acct']||0)) > 0, pts: 'category' },
-    { label: 'Total deductions over $5,000',           done: grand >= 5000,                          pts: '+5 pts' },
-    { label: 'Total deductions over $15,000',          done: grand >= 15000,                         pts: '+5 pts' },
-  ];
-
-  const incomplete = checks.filter(c => !c.done);
-  const complete   = checks.filter(c =>  c.done);
-
-  let html = '';
-  // Show incomplete first (what's left to do)
-  incomplete.slice(0, 5).forEach(c => {
-    html += `<div class="rt-item">
-      <div class="rt-dot todo"></div>
-      <div class="rt-text">${c.label} <span style="color:var(--gold);font-size:10.5px;font-weight:600;">${c.pts}</span></div>
-    </div>`;
-  });
-  // Show completed items below
-  complete.slice(0, 3).forEach(c => {
-    html += `<div class="rt-item">
-      <div class="rt-dot done"></div>
-      <div class="rt-text done">${c.label}</div>
-    </div>`;
-  });
-
-  tip.innerHTML = html;
-
-  const remaining = incomplete.length;
-  if (remaining === 0) {
-    footer.textContent = '✓ All key items complete — Schedule C ready.';
-    footer.style.color = 'var(--green)';
-  } else {
-    footer.textContent = `${remaining} item${remaining > 1 ? 's' : ''} left to maximize your score.`;
-    footer.style.color = '';
-  }
-}
-
-function updateHeroReadiness(grand, filled) {
-  updateReadinessTip(grand, filled);
-  const zeroCats = CATEGORIES.filter(c=>c.lines.reduce((s,l)=>s+lineDed(l),0)===0).map(c=>c.name);
-  const score = calcReadinessScore(grand, zeroCats, vals);
-  const fill = document.getElementById('heroRFill');
-  const num = document.getElementById('heroScoreNum');
-  const grade = document.getElementById('heroScoreGrade');
-  if (!fill) return;
-  const circumference = 200;
-  fill.style.strokeDashoffset = circumference - (score/100)*circumference;
-  num.textContent = score;
-  if (score >= 80) {
-    fill.style.stroke='#1A9E6E';
-    grade.textContent='Schedule C\nReady';
-    grade.innerHTML='Schedule C<br>Ready';
-    grade.style.color='#1A9E6E';
-  } else if (score >= 60) {
-    fill.style.stroke='#C8973A';
-    grade.innerHTML='Mostly<br>Ready';
-    grade.style.color='#C8973A';
-  } else if (score >= 40) {
-    fill.style.stroke='#D97706';
-    grade.innerHTML='Needs<br>Attention';
-    grade.style.color='#D97706';
-  } else if (score > 0) {
-    fill.style.stroke='#C84040';
-    grade.innerHTML='Not Ready<br>Yet';
-    grade.style.color='#C84040';
-  } else {
-    fill.style.stroke='rgba(255,255,255,0.08)';
-    grade.innerHTML='Start filling<br>to score';
-    grade.style.color='';
-  }
-}
-
-function buildSummary(){
-  document.getElementById('summaryRows').innerHTML=CATEGORIES.map(cat=>{
-    const t=cat.lines.reduce((s,l)=>s+lineDed(l),0);
-    return`<div class="summary-row"><span class="s-cat">${cat.icon} ${cat.name}</span><span class="s-amt${t>0?'':' zero'}">$${Math.round(t).toLocaleString()}</span></div>`;
-  }).join('');
-}
-
-function updateMissing(){
-  const ind=document.getElementById('industry').value;
-  const items=MISSING[ind]||MISSING.other;
-  document.getElementById('missingItems').innerHTML=items.map(i=>`<div class="missing-item">${i}</div>`).join('');
-}
-
-// ─── READINESS SCORE (REFINEMENT 5) ───
-function calcReadinessScore(grand, zeroCats, vals) {
-  let score = 40; // base
-  // Documentation completeness
-  const totalCats = CATEGORIES.length;
-  const filledCats = totalCats - zeroCats.length;
-  score += Math.round((filledCats / totalCats) * 30);
-  // Key items
-  if (vals['ho_sqft'] > 0) score += 5;
-  if (vals['v_miles'] > 0) score += 5;
-  if ((vals['h_health']||0) > 0) score += 5;
-  if ((vals['r_sep']||0)+(vals['r_401e']||0) > 0) score += 5;
-  if (grand > 5000) score += 5;
-  if (grand > 15000) score += 5;
-  return Math.min(score, 100);
-}
-
-function renderReadiness(score) {
-  const block = document.getElementById('readinessBlock');
-  block.classList.add('show');
-  const fill = document.getElementById('rFill');
-  const num = document.getElementById('readinessNum');
-  const grade = document.getElementById('readinessGrade');
-  const sub = document.getElementById('readinessSub');
-  const circumference = 220;
-  const offset = circumference - (score/100)*circumference;
-  setTimeout(() => {
-    fill.style.strokeDashoffset = offset;
-    num.textContent = score;
-    if (score >= 80) {
-      fill.style.stroke='#1A9E6E'; grade.textContent='Schedule C Ready';
-      sub.textContent='Your documentation is solid. High confidence for filing or CPA handoff.';
-    } else if (score >= 60) {
-      fill.style.stroke='#C8973A'; grade.textContent='Mostly Ready — Close Gaps';
-      sub.textContent='Good foundation. Addressing missing categories will strengthen your position significantly.';
-    } else if (score >= 40) {
-      fill.style.stroke='#D97706'; grade.textContent='Partial — Needs Attention';
-      sub.textContent='Several key categories are empty. Filing with this profile leaves recoverable money unclaimed.';
-    } else {
-      fill.style.stroke='#C84040'; grade.textContent='Not Ready — High Risk';
-      sub.textContent='Significant documentation gaps. Tax exposure is elevated. A Tax Rescue Session is strongly recommended.';
+    if (tbody.innerHTML === '') {
+      tbody.innerHTML = '<tr><td colspan="4" style="color:var(--muted); text-align:center; padding:1.5rem;">No deductions entered. Fill in GL categories above.</td></tr>';
     }
-  }, 100);
-}
 
-// ─── LLC RISK FLAG (REFINEMENT 4) ───
-function renderLLCFlag(veilRisks) {
-  const flag = document.getElementById('llcFlag');
-  const body = document.getElementById('llcFlagBody');
-  const items = document.getElementById('llcItems');
-  const entity = document.getElementById('entityType').value;
+    document.getElementById('results-section').style.display = 'block';
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 
-  if (veilRisks && veilRisks.length > 0) {
-    flag.classList.add('show');
-    const isLLC = entity === 'llc' || entity === 's_corp' || entity === 'partnership';
-    body.innerHTML = isLLC
-      ? `<strong>${veilRisks.length} personal expense${veilRisks.length>1?'s':''} detected</strong> running through your business account. For LLCs and corporations, co-mingling personal and business expenses is one of the primary ways courts pierce the corporate veil — exposing your personal assets to business liability.`
-      : `<strong>${veilRisks.length} personal expense${veilRisks.length>1?'s':''} detected</strong> on your business account. While less critical for sole proprietors, separating these now builds cleaner records for any future entity upgrade.`;
-    items.innerHTML = veilRisks.map(r =>
-      `<div class="llc-item"><strong>${r.desc}</strong> — $${r.amt.toFixed(2)} (personal charge on business account)</div>`
-    ).join('');
-  } else {
-    flag.classList.add('show');
-    flag.style.background='var(--green-bg)';
-    flag.style.borderColor='rgba(26,158,110,0.3)';
-    document.querySelector('.llc-flag-title').style.color='var(--green)';
-    document.querySelector('.llc-flag-badge').style.background='var(--green)';
-    document.querySelector('.llc-flag-badge').textContent='CLEAR';
-    body.innerHTML='<strong style="color:var(--green)">No corporate veil threats detected.</strong> All visible transactions appear to be properly business-related. Maintain this separation to protect your entity liability shield.';
-    items.innerHTML='';
+  // ─── FILE UPLOAD & PARSE ─────────────────────────────
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFile(e.dataTransfer.files[0]); });
+  fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+  function handleFile(file) {
+    if (!file) return;
+    document.getElementById('uploadLoading').classList.add('active');
+    document.getElementById('txResults').style.display = 'none';
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setTimeout(() => {
+        const text = e.target.result;
+        const transactions = parseCSV(text);
+        renderTransactions(transactions);
+        document.getElementById('uploadLoading').classList.remove('active');
+      }, 800);
+    };
+    reader.readAsText(file);
   }
-}
 
-// ─── MAIN AI ANALYSIS ───
-async function runAnalysis() {
-  const btn=document.getElementById('aiBtn');
-  btn.disabled=true;btn.textContent='⏳ Analyzing...';
-  const panel=document.getElementById('aiPanel');
-  panel.classList.add('show');
-  panel.scrollIntoView({behavior:'smooth',block:'start'});
-  document.getElementById('aiSpinner').classList.add('show');
-  document.getElementById('aiText').classList.remove('show');
-  document.getElementById('actionStrip').style.display='none';
+  function parseCSV(text) {
+    const lines = text.split('\n').filter(l => l.trim());
+    const transactions = [];
+    // Try to detect header
+    const startIdx = lines[0].toLowerCase().includes('date') || lines[0].toLowerCase().includes('amount') ? 1 : 0;
 
-  const grand=CATEGORIES.reduce((s,c)=>s+c.lines.reduce((ss,l)=>ss+lineDed(l),0),0);
-  const rate=parseFloat(document.getElementById('taxRate').value)||0.24;
-  const saved=Math.round(grand*rate);
-  const entity=document.getElementById('entityType').options[document.getElementById('entityType').selectedIndex].text;
-  const industry=document.getElementById('industry').options[document.getElementById('industry').selectedIndex].text;
-  const zeroCats=CATEGORIES.filter(c=>c.lines.reduce((s,l)=>s+lineDed(l),0)===0).map(c=>c.name);
-  const topCats=CATEGORIES.map(c=>({name:c.name,t:Math.round(c.lines.reduce((s,l)=>s+lineDed(l),0))})).filter(c=>c.t>0).sort((a,b)=>b.t-a.t).slice(0,4);
-  const veilRisks=window._veilRisks||[];
+    for (let i = startIdx; i < Math.min(lines.length, 100); i++) {
+      const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+      if (cols.length < 2) continue;
 
-  // REFINEMENT 4: LLC flag FIRST — highest-value differentiator
-  renderLLCFlag(veilRisks);
+      // Heuristic: find date-like, desc-like, amount-like columns
+      let date = '', desc = '', amount = 0;
 
-  // REFINEMENT 5: Render readiness score
-  const readiness=calcReadinessScore(grand, zeroCats, vals);
-  renderReadiness(readiness);
+      for (const col of cols) {
+        if (!date && /\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/.test(col)) { date = col; continue; }
+        if (!amount && /^-?\$?[\d,]+\.?\d*$/.test(col.replace(/[$,]/g,''))) {
+          const parsed = parseFloat(col.replace(/[$,]/g,''));
+          if (!isNaN(parsed)) { amount = parsed; continue; }
+        }
+        if (!desc && col.length > 3 && isNaN(col)) { desc = col; }
+      }
 
-  const profile=`Entity: ${entity}. Industry: ${industry}. Bracket: ${Math.round(rate*100)}%. Total deductions: $${Math.round(grand).toLocaleString()}. Est. tax savings: $${saved.toLocaleString()}. Schedule C Readiness: ${readiness}/100. Top categories: ${topCats.map(c=>c.name+' ($'+c.t.toLocaleString()+')').join(', ')}. Zero categories: ${zeroCats.join(', ')||'none'}. Veil risks detected: ${veilRisks.length}. Retirement: $${Math.round((vals['r_sep']||0)+(vals['r_401e']||0)+(vals['r_401r']||0)).toLocaleString()}. Health insurance: $${Math.round(vals['h_health']||0).toLocaleString()}.`;
+      if (desc || amount) {
+        const { category, confidence } = classifyTransaction(desc);
+        transactions.push({ date: date || '—', desc: desc || '—', amount, category, confidence });
+      }
+    }
+    return transactions;
+  }
 
-  try {
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        model:"claude-sonnet-4-20250514",max_tokens:1000,
-        system:"You are Sarah Mae Gordon, founder of FiscalAI. Strategic Finance Architect — 10+ years at Mastercard and Ameriprise Financial. Genius Mode: dense, precise, warmly authoritative. No disclaimers. Direct advisor voice.",
-        messages:[{role:"user",content:`Business owner used the FiscalAI Deduction Decoder. Profile:\n${profile}\n\nWrite 4 punchy paragraphs — no headers, no bullets:\n\nPara 1: What their $${Math.round(grand).toLocaleString()} total and ${readiness}/100 readiness score signals. Translate $${saved.toLocaleString()} saved into something real and tangible.\n\nPara 2: Pick their 2 most glaring zero categories. Name the specific deduction they almost certainly have but didn't enter. Be dollar-specific.\n\nPara 3: Their single highest-ROI move for their entity type and bracket. Concrete — with a number.\n\nPara 4: What April 15 means for them right now. Real consequence of inaction. One sentence pulling toward the Tax Rescue Session.\n\nUnder 300 words. Sharp, direct, no filler.`}]
-      })
+  function renderTransactions(txs) {
+    const tbody = document.getElementById('txBody');
+    tbody.innerHTML = '';
+
+    if (txs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:1rem;">Could not parse transactions. Try a CSV with Date, Description, Amount columns.</td></tr>';
+    } else {
+      // Auto-fill GL inputs from mapped transactions
+      const glTotals = {};
+      txs.forEach(tx => {
+        if (tx.amount < 0) { // expenses
+          const cat = tx.category;
+          glTotals[cat] = (glTotals[cat] || 0) + Math.abs(tx.amount);
+        }
+      });
+
+      txs.slice(0, 50).forEach(tx => {
+        const confClass = tx.confidence === 'high' ? 'conf-high' : tx.confidence === 'med' ? 'conf-med' : 'conf-low';
+        const catLabel = GL_CATEGORIES.find(c => c.id === tx.category)?.label || tx.category;
+        tbody.innerHTML += `<tr>
+          <td>${tx.date}</td>
+          <td>${tx.desc}</td>
+          <td>$${Math.abs(tx.amount).toFixed(2)}</td>
+          <td>${catLabel}</td>
+          <td class="${confClass}">${tx.confidence.toUpperCase()}</td>
+        </tr>`;
+      });
+
+      // Store for apply button
+      window._glTotals = glTotals;
+    }
+
+    document.getElementById('txResults').style.display = 'block';
+  }
+
+  document.getElementById('applyToDecoder').addEventListener('click', () => {
+    if (!window._glTotals) return;
+    Object.entries(window._glTotals).forEach(([cat, total]) => {
+      const input = document.getElementById(`gl_${cat}`);
+      if (input) input.value = total.toFixed(2);
     });
-    const data=await res.json();
-    const text=data.content?.[0]?.text||fallback(grand,saved,zeroCats,entity,readiness);
-    document.getElementById('aiSpinner').classList.remove('show');
-    const t=document.getElementById('aiText');t.textContent=text;t.classList.add('show');
-    document.getElementById('actionStrip').style.display='flex';
-  } catch(e) {
-    document.getElementById('aiSpinner').classList.remove('show');
-    const t=document.getElementById('aiText');t.textContent=fallback(grand,saved,zeroCats,entity,readiness);t.classList.add('show');
-    document.getElementById('actionStrip').style.display='flex';
-  }
-  btn.textContent='✓ Analysis Complete';
-}
-
-// ─── ACCESS=FULL: Stripe redirect handler ───
-(function() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('access') === 'full') {
-    hasAccess = true;
-    document.getElementById('accessBar').classList.add('show');
-    document.getElementById('adBanner').style.display = 'none';
-    document.getElementById('freeBadge').style.display = 'none';
-    const upgradeBtn = document.querySelector('.upgrade-btn');
-    if (upgradeBtn) upgradeBtn.style.display = 'none';
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-})();
-
-function fallback(grand,saved,zeroCats,entity,readiness) {
-  const top2=zeroCats.slice(0,2).join(' and ');
-  return`You've identified $${Math.round(grand).toLocaleString()} in recoverable deductions with a ${readiness}/100 Schedule C Readiness Score — that's $${saved.toLocaleString()} that stays in your business instead of going to the IRS. Reinvested, that's a product launch, a quarter of a hire, or three months of operating runway.\n\nYour report shows $0 in ${top2||'several key categories'} — and that's almost never accurate for an active business. Health insurance premiums at $400/month represent $4,800 in above-the-line deductions most operators miss entirely. That reduces your adjusted gross income at the federal, state, and self-employment level simultaneously.\n\nFor a ${entity}, the single highest-leverage move before April 15 is establishing and funding a SEP-IRA. You can contribute up to 25% of net self-employment income — deadline is your filing date including extensions. At 24%, a $10,000 SEP contribution generates $2,400 in immediate federal savings plus SE tax reduction.\n\nEvery day past April 15 without a filed return or extension accumulates 5% of unpaid tax per month. The $${saved.toLocaleString()} this report shows is the floor. The Tax Rescue Session turns this decoder output into a complete, CPA-ready filing position — same day.`;
-}
-
-function resetAll(){
-  document.getElementById('categories').innerHTML='';
-  Object.keys(vals).forEach(k=>vals[k]=0);
-  Object.keys(sliders).forEach(k=>delete sliders[k]);
-  buildUI();recalc();
-  document.getElementById('aiPanel').classList.remove('show');
-  document.getElementById('readinessBlock').classList.remove('show');
-  document.getElementById('llcFlag').classList.remove('show');
-  document.getElementById('aiBtn').disabled=false;
-  document.getElementById('aiBtn').textContent='🔍 Run Full GL Analysis';
-  document.getElementById('parsedResults').classList.remove('show');
-  document.getElementById('parseBar').classList.remove('show');
-  uploadUsed=false; pendingFile=null;
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-buildUI();recalc();
+    // Trigger totals recalc
+    document.querySelectorAll('.gl-input')[0].dispatchEvent(new Event('input'));
+    document.getElementById('step-decoder').scrollIntoView({ behavior: 'smooth' });
+  });
 </script>
 </body>
 </html>
