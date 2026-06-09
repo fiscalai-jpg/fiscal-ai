@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiet Wealth — Digital Wallpaper Collection</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--blush:#f5ece8;--blush-deep:#ede0d8;--blush-card:#faf5f0;--rose-gold:#b8785a;--rose-gold-light:#d4a090;--ivory:#f7f2ea;--charcoal:#1e1612;--charcoal-mid:#2a1f1a;--mid:#7a6058;--mid-light:#a89080;--rule:#ddd0c8;--dark-bg:#141210;--dark-card:#1e1a16;--dark-gold:#c4a050;}
+html{scroll-behavior:smooth;}
+body{font-family:'Jost',sans-serif;background:var(--blush);color:var(--charcoal);font-weight:300;line-height:1.6;overflow-x:hidden;}
+.nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(245,236,232,0.95);border-bottom:1px solid var(--rule);backdrop-filter:blur(8px);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;}
+.nav-title{font-family:'Cormorant Garamond',serif;font-size:14px;letter-spacing:6px;font-weight:400;color:var(--charcoal);text-transform:uppercase;}
+.nav-buy{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:3px;font-weight:400;color:var(--rose-gold);text-decoration:none;border:1px solid var(--rose-gold);padding:8px 20px;text-transform:uppercase;cursor:pointer;background:none;transition:all 0.2s ease;}
+.nav-buy:hover{background:var(--rose-gold);color:white;}
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 40px 80px;position:relative;overflow:hidden;background:var(--blush);}
+.hero-grid-line{position:absolute;background:var(--rule);opacity:0.6;}
+.hero-grid-v1{width:1px;height:100%;left:10%;top:0;}
+.hero-grid-v2{width:1px;height:100%;right:10%;top:0;}
+.hero-grid-h1{height:1px;width:100%;top:15%;left:0;}
+.hero-grid-h2{height:1px;width:100%;bottom:15%;left:0;}
+.hero-accent-line{position:absolute;background:var(--rose-gold);opacity:0.3;}
+.hero-accent-v{width:1px;height:60%;left:50%;top:20%;}
+.hero-inner{max-width:720px;width:100%;text-align:center;position:relative;z-index:2;}
+.hero-eyebrow{display:inline-block;font-size:10px;letter-spacing:6px;font-weight:400;color:var(--rose-gold);text-transform:uppercase;border:1px solid var(--rose-gold);padding:6px 16px;margin-bottom:40px;opacity:0;animation:fadeUp 0.8s ease forwards 0.2s;}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(52px,8vw,88px);font-weight:300;letter-spacing:8px;line-height:1.1;color:var(--charcoal);text-transform:uppercase;margin-bottom:12px;opacity:0;animation:fadeUp 0.8s ease forwards 0.4s;}
+.hero-title em{font-style:italic;font-weight:300;letter-spacing:4px;}
+.hero-rule{width:60px;height:1px;background:var(--rose-gold);margin:28px auto;opacity:0;animation:fadeUp 0.6s ease forwards 0.6s;}
+.hero-sub{font-size:13px;letter-spacing:3px;font-weight:300;color:var(--mid);text-transform:uppercase;margin-bottom:56px;opacity:0;animation:fadeUp 0.8s ease forwards 0.7s;}
+.hero-cta-wrap{opacity:0;animation:fadeUp 0.8s ease forwards 0.9s;}
+.hero-price{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:4px;color:var(--mid);margin-bottom:16px;text-transform:uppercase;}
+.hero-btn{display:inline-block;font-size:11px;letter-spacing:4px;font-weight:400;text-transform:uppercase;background:var(--rose-gold);color:white;padding:18px 48px;border:none;cursor:pointer;transition:all 0.3s ease;font-family:'Jost',sans-serif;text-decoration:none;}
+.hero-btn:hover{background:var(--charcoal);letter-spacing:6px;}
+.hero-note{font-size:10px;letter-spacing:3px;color:var(--mid-light);margin-top:16px;text-transform:uppercase;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.section{padding:100px 40px;max-width:1100px;margin:0 auto;}
+.section-label{font-size:10px;letter-spacing:6px;text-transform:uppercase;color:var(--rose-gold);margin-bottom:48px;display:flex;align-items:center;gap:16px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--rule);max-width:200px;}
+.divider{border:none;border-top:1px solid var(--rule);margin:0 40px;}
+.pack-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+@media(max-width:768px){.pack-grid{grid-template-columns:1fr 1fr;}.nav-bar{padding:14px 20px;}.section{padding:60px 24px;}.hero{padding:100px 24px 60px;}}
+@media(max-width:480px){.pack-grid{grid-template-columns:1fr;}}
+.pack-card{background:var(--blush-card);border:1px solid var(--rule);padding:32px 24px;position:relative;overflow:hidden;transition:border-color 0.2s ease;}
+.pack-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--rose-gold);opacity:0.5;}
+.pack-card:hover{border-color:var(--rose-gold-light);}
+.pack-num{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:4px;color:var(--rose-gold);margin-bottom:20px;opacity:0.7;}
+.pack-geo{width:60px;height:60px;margin-bottom:20px;}
+.pack-name{font-family:'Cormorant Garamond',serif;font-size:18px;letter-spacing:4px;font-weight:400;text-transform:uppercase;color:var(--charcoal);margin-bottom:8px;}
+.pack-sub{font-size:11px;letter-spacing:2px;color:var(--mid);text-transform:uppercase;opacity:0.7;}
+.pack-rule{width:30px;height:1px;background:var(--rose-gold);margin:16px 0;opacity:0.5;}
+.pack-desc{font-size:12px;color:var(--mid);line-height:1.7;}
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:48px 60px;}
+@media(max-width:768px){.pillars{grid-template-columns:1fr;gap:40px;}}
+.pillar-num{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:4px;color:var(--rose-gold);margin-bottom:16px;}
+.pillar-title{font-family:'Cormorant Garamond',serif;font-size:22px;letter-spacing:2px;font-weight:400;color:var(--charcoal);margin-bottom:12px;text-transform:uppercase;}
+.pillar-body{font-size:13px;color:var(--mid);line-height:1.8;}
+.dark-section{background:var(--dark-bg);padding:100px 40px;}
+.philosophy-block{max-width:640px;margin:0 auto;text-align:center;}
+.philosophy-quote{font-family:'Cormorant Garamond',serif;font-size:clamp(26px,4vw,40px);font-weight:300;font-style:italic;line-height:1.4;color:#e8dcc8;letter-spacing:1px;margin-bottom:24px;}
+.philosophy-attr{font-size:10px;letter-spacing:5px;color:#5a4a3a;text-transform:uppercase;}
+.cta-section{background:var(--blush-deep);border:1px solid var(--rule);padding:80px 60px;text-align:center;position:relative;overflow:hidden;max-width:800px;margin:0 auto;}
+.cta-section::before,.cta-section::after{content:'';position:absolute;background:var(--rose-gold);opacity:0.3;}
+.cta-section::before{top:0;left:0;right:0;height:2px;}
+.cta-section::after{bottom:0;left:0;right:0;height:2px;}
+.cta-eyebrow{font-size:10px;letter-spacing:6px;text-transform:uppercase;color:var(--rose-gold);margin-bottom:20px;}
+.cta-title{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,5vw,52px);font-weight:300;letter-spacing:6px;text-transform:uppercase;color:var(--charcoal);margin-bottom:8px;}
+.cta-sub{font-family:'Cormorant Garamond',serif;font-size:16px;font-style:italic;color:var(--mid);margin-bottom:40px;}
+.includes-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 40px;text-align:left;max-width:440px;margin:0 auto 40px;}
+@media(max-width:480px){.includes-grid{grid-template-columns:1fr;}.cta-section{padding:60px 24px;}}
+.includes-item{font-size:12px;letter-spacing:2px;color:var(--mid);text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:10px;}
+.includes-item::before{content:'—';color:var(--rose-gold);font-size:10px;}
+.price-tag{font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300;color:var(--rose-gold);letter-spacing:2px;margin-bottom:8px;}
+.price-note{font-size:10px;letter-spacing:3px;color:var(--mid-light);text-transform:uppercase;margin-bottom:32px;}
+.buy-btn{display:inline-block;font-family:'Jost',sans-serif;font-size:11px;letter-spacing:5px;font-weight:400;text-transform:uppercase;background:var(--rose-gold);color:white;padding:20px 60px;border:none;cursor:pointer;transition:all 0.3s ease;text-decoration:none;width:100%;max-width:320px;}
+.buy-btn:hover{background:var(--charcoal);letter-spacing:7px;}
+.scroll-reveal{opacity:0;transform:translateY(24px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.scroll-reveal.visible{opacity:1;transform:translateY(0);}
+footer{border-top:1px solid var(--rule);padding:40px;text-align:center;font-size:10px;letter-spacing:4px;color:var(--mid-light);text-transform:uppercase;}
+</style>
+</head>
+<body>
+  <nav class="nav-bar">
+  <span class="nav-title">Quiet Wealth</span>
+  <a class="nav-buy" href="https://fiscalai-jpg.gumroad.com/l/dpzmia">$9.99 — Get the pack</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid-line hero-grid-v1"></div>
+  <div class="hero-grid-line hero-grid-v2"></div>
+  <div class="hero-grid-line hero-grid-h1"></div>
+  <div class="hero-grid-line hero-grid-h2"></div>
+  <div class="hero-accent-line hero-accent-v"></div>
+  <div class="hero-inner">
+    <span class="hero-eyebrow">Digital Wallpaper Collection</span>
+    <h1 class="hero-title">Quiet<br><em>Wealth</em></h1>
+    <div class="hero-rule"></div>
+    <p class="hero-sub">Wealth as a visual practice</p>
+    <div class="hero-cta-wrap">
+      <p class="hero-price">6 wallpapers · phone + desktop · $9.99</p>
+      <a class="hero-btn" href="https://fiscalai-jpg.gumroad.com/l/dpzmia">I want this</a>
+      <p class="hero-note">Instant download · No account required</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<div class="section scroll-reveal">
+  <p class="section-label">The Collection</p>
+  <div class="pack-grid">
+    <div class="pack-card">
+      <p class="pack-num">No. 01</p>
+      <svg class="pack-geo" viewBox="0 0 60 60" fill="none">
+        <circle cx="30" cy="30" r="20" stroke="#b8785a" stroke-width="0.6" opacity="0.4"/>
+        <circle cx="30" cy="30" r="13" stroke="#b8785a" stroke-width="0.7" opacity="0.6"/>
+        <circle cx="30" cy="30" r="6" stroke="#b8785a" stroke-width="0.8" opacity="0.8"/>
+        <circle cx="30" cy="30" r="1.5" fill="#b8785a"/>
+        <line x1="30" y1="10" x2="30" y2="16" stroke="#b8785a" stroke-width="0.8" opacity="0.6"/>
+        <line x1="30" y1="44" x2="30" y2="50" stroke="#b8785a" stroke-width="0.8" opacity="0.6"/>
+        <line x1="10" y1="30" x2="16" y2="30" stroke="#b8785a" stroke-width="0.8" opacity="0.6"/>
+        <line x1="44" y1="30" x2="50" y2="30" stroke="#b8785a" stroke-width="0.8" opacity="0.6"/>
+      </svg>
+      <p class="pack-name">The Compass</p>
+      <p class="pack-sub">Phone · Warm Ivory</p>
+      <div class="pack-rule"></div>
+      <p class="pack-desc">Concentric rings in warm ivory and rose gold. The geometry of orientation — a quiet reminder that all direction begins from stillness.</p>
+    </div>
+    <div class="pack-card">
+      <p class="pack-num">No. 02</p>
+      <svg class="pack-geo" viewBox="0 0 60 60" fill="none">
+        <ellipse cx="30" cy="30" rx="20" ry="28" stroke="#b8785a" stroke-width="0.5" opacity="0.3"/>
+        <ellipse cx="30" cy="30" rx="12" ry="18" stroke="#b8785a" stroke-width="0.6" opacity="0.5"/>
+        <ellipse cx="30" cy="30" rx="5" ry="8" stroke="#b8785a" stroke-width="0.8" opacity="0.7"/>
+        <circle cx="30" cy="30" r="1.5" fill="#b8785a"/>
+        <line x1="10" y1="30" x2="50" y2="30" stroke="#b8785a" stroke-width="0.4" opacity="0.4"/>
+        <line x1="30" y1="2" x2="30" y2="58" stroke="#b8785a" stroke-width="0.4" opacity="0.4"/>
+      </svg>
+      <p class="pack-name">The Meridian</p>
+      <p class="pack-sub">Phone · Warm Ivory</p>
+      <div class="pack-rule"></div>
+      <p class="pack-desc">Globe meridians rendered in hairline gold. Where all lines converge — the point of absolute reference and accumulated return.</p>
+    </div>
+    <div class="pack-card">
+      <p class="pack-num">No. 03</p>
+      <svg class="pack-geo" viewBox="0 0 60 60" fill="none">
+        <line x1="14" y1="0" x2="14" y2="60" stroke="#b8785a" stroke-width="0.8" opacity="0.6"/>
+        <line x1="46" y1="0" x2="46" y2="60" stroke="#b8785a" stroke-width="0.8" opacity="0.6"/>
+        <line x1="0" y1="20" x2="60" y2="20" stroke="#d4cbb8" stroke-width="0.5"/>
+        <line x1="0" y1="30" x2="60" y2="30" stroke="#d4cbb8" stroke-width="0.5"/>
+        <line x1="0" y1="40" x2="60" y2="40" stroke="#d4cbb8" stroke-width="0.5"/>
+      </svg>
+      <p class="pack-name">The Ledger</p>
+      <p class="pack-sub">Phone · Aged Ivory</p>
+      <div class="pack-rule"></div>
+      <p class="pack-desc">Ruled columns and gold verticals in the language of institutional accounting. Accumulation as a daily practice, not an event.</p>
+    </div>
+    <div class="pack-card">
+      <p class="pack-num">No. 04</p>
+      <svg class="pack-geo" viewBox="0 0 60 60" fill="none">
+        <circle cx="30" cy="30" r="22" stroke="#c4a050" stroke-width="0.5" opacity="0.4"/>
+        <circle cx="30" cy="30" r="16" stroke="#c4a050" stroke-width="0.7" opacity="0.6"/>
+        <circle cx="30" cy="30" r="10" stroke="#c4a050" stroke-width="0.8" opacity="0.75"/>
+        <circle cx="30" cy="30" r="4" fill="#221e18" stroke="#c4a050" stroke-width="0.9" opacity="0.9"/>
+        <circle cx="30" cy="30" r="1.2" fill="#c4a050"/>
+        <line x1="30" y1="14" x2="30" y2="18" stroke="#c4a050" stroke-width="1.2" opacity="0.8"/>
+        <line x1="30" y1="42" x2="30" y2="46" stroke="#c4a050" stroke-width="1.2" opacity="0.8"/>
+        <line x1="30" y1="24" x2="36" y2="28" stroke="#c4a050" stroke-width="0.8" opacity="0.8"/>
+      </svg>
+      <p class="pack-name">The Vault</p>
+      <p class="pack-sub">Phone · Deep Charcoal</p>
+      <div class="pack-rule"></div>
+      <p class="pack-desc">Deep charcoal field with a vault dial in burnished gold. What is protected compounds. Security rendered as visual architecture.</p>
+    </div>
+    <div class="pack-card">
+      <p class="pack-num">No. 05</p>
+      <svg class="pack-geo" viewBox="0 0 60 60" fill="none">
+        <line x1="10" y1="0" x2="10" y2="60" stroke="#ddd5c0" stroke-width="0.4"/>
+        <line x1="20" y1="0" x2="20" y2="60" stroke="#ddd5c0" stroke-width="0.4"/>
+        <line x1="30" y1="0" x2="30" y2="60" stroke="#ddd5c0" stroke-width="0.4"/>
+        <line x1="40" y1="0" x2="40" y2="60" stroke="#ddd5c0" stroke-width="0.4"/>
+        <line x1="50" y1="0" x2="50" y2="60" stroke="#ddd5c0" stroke-width="0.4"/>
+        <line x1="0" y1="10" x2="60" y2="10" stroke="#ddd5c0" stroke-width="0.4"/>
+        <line x1="0" y1="30" x2="60" y2="30" stroke="#ddd5c0" stroke-width="0.4"/>
+        <line x1="0" y1="50" x2="60" y2="50" stroke="#ddd5c0" stroke-width="0.4"/>
+        <rect x="10" y="10" width="40" height="40" fill="none" stroke="#8a6820" stroke-width="0.6" opacity="0.4"/>
+      </svg>
+      <p class="pack-name">The Archive</p>
+      <p class="pack-sub">Phone · Warm Ivory</p>
+      <div class="pack-rule"></div>
+      <p class="pack-desc">Architectural grid with fading typographic layers. Record. Preserve. Compound. The philosophy of wealth made structural.</p>
+    </div>
+    <div class="pack-card">
+      <p class="pack-num">No. 06</p>
+      <svg class="pack-geo" viewBox="0 0 60 60" fill="none">
+        <rect width="60" height="34" fill="#181512"/>
+        <circle cx="30" cy="17" r="12" stroke="#c4a050" stroke-width="0.5" opacity="0.4"/>
+        <circle cx="30" cy="17" r="8" stroke="#c4a050" stroke-width="0.7" opacity="0.6"/>
+        <circle cx="30" cy="17" r="4" fill="#221e18" stroke="#c4a050" stroke-width="0.9"/>
+        <circle cx="30" cy="17" r="1.2" fill="#c4a050"/>
+        <line x1="30" y1="5" x2="30" y2="8" stroke="#c4a050" stroke-width="1" opacity="0.8"/>
+        <line x1="30" y1="26" x2="30" y2="29" stroke="#c4a050" stroke-width="1" opacity="0.8"/>
+        <line x1="30" y1="12" x2="33" y2="14.5" stroke="#c4a050" stroke-width="0.7" opacity="0.8"/>
+        <rect x="0" y="34" width="60" height="2" fill="#c4a050" opacity="0.5"/>
+      </svg>
+      <p class="pack-name">The Vault</p>
+      <p class="pack-sub">Desktop · 16:9 Dark</p>
+      <div class="pack-rule"></div>
+      <p class="pack-desc">The vault dial scaled to widescreen. Deep charcoal desktop edition — for the workspace that signals before you even open a tab.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="dark-section">
+  <div style="max-width:1100px;margin:0 auto;">
+    <div class="philosophy-block scroll-reveal">
+      <div style="width:40px;height:1px;background:#c4a050;opacity:0.4;margin:0 auto 40px;"></div>
+      <p class="philosophy-quote">"Wealth is not loud. It is the geometry of patience — lines drawn over years, compounding in silence."</p>
+      <div style="width:40px;height:1px;background:#c4a050;opacity:0.4;margin:24px auto 0;"></div>
+      <p class="philosophy-attr" style="margin-top:20px;">Quiet Wealth · The Practice</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+<div class="section scroll-reveal">
+  <p class="section-label">Why it works</p>
+  <div class="pillars">
+    <div>
+      <p class="pillar-num">I</p>
+      <p class="pillar-title">Visual Identity</p>
+      <div style="width:24px;height:1px;background:var(--rose-gold);opacity:0.5;margin:12px 0 16px;"></div>
+      <p class="pillar-body">Your screen is the first thing you see and the last thing you close. The Quiet Wealth system turns that surface into a daily signal — who you are becoming, not just what you are doing.</p>
+    </div>
+    <div>
+      <p class="pillar-num">II</p>
+      <p class="pillar-title">Institutional Language</p>
+      <div style="width:24px;height:1px;background:var(--rose-gold);opacity:0.5;margin:12px 0 16px;"></div>
+      <p class="pillar-body">Every element — the hairline geometry, the serif precision, the restrained palette — speaks the visual vernacular of old money and institutional clarity. Not aspirational. Embodied.</p>
+    </div>
+    <div>
+      <p class="pillar-num">III</p>
+      <p class="pillar-title">Quiet Authority</p>
+      <div style="width:24px;height:1px;background:var(--rose-gold);opacity:0.5;margin:12px 0 16px;"></div>
+      <p class="pillar-body">No loud graphics. No motivational quotes in Impact font. Just the aesthetic of someone who has already arrived — and operates from that frequency every single day.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="section scroll-reveal" style="padding-top:80px;padding-bottom:100px;">
+  <div class="cta-section">
+    <p class="cta-eyebrow">Instant Download</p>
+    <h2 class="cta-title">Quiet Wealth</h2>
+    <p class="cta-sub">wealth as a visual practice</p>
+    <div class="includes-grid">
+      <span class="includes-item">The Compass · Phone</span>
+      <span class="includes-item">The Meridian · Phone</span>
+      <span class="includes-item">The Ledger · Phone</span>
+      <span class="includes-item">The Vault · Phone</span>
+      <span class="includes-item">The Archive · Phone</span>
+      <span class="includes-item">The Vault · Desktop</span>
+    </div>
+    <p class="price-tag">$9.99</p>
+    <p class="price-note">One-time · Instant ZIP download · No account required</p>
+    <a class="buy-btn" href="https://fiscalai-jpg.gumroad.com/l/dpzmia">I want this</a>
+  </div>
+</div>
+
+<footer>
+  <p>Quiet Wealth · Digital Wallpaper Collection</p>
+  <p style="margin-top:8px;opacity:0.5;">The art of unhurried accumulation</p>
+</footer>
+
+<script>
+const reveals=document.querySelectorAll('.scroll-reveal');
+const observer=new IntersectionObserver((entries)=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('visible');observer.unobserve(entry.target);}});},{threshold:0.1});
+reveals.forEach(el=>observer.observe(el));
+</script>
+
+</body>
+</html>
