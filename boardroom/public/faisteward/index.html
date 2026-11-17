@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Boardroom · Steward by FiscalAI</title>
+<meta name="description" content="Take your seat at the Boardroom table. Upload your completed FiscalAI forecast and receive a thorough brief from Steward.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--ink:#0B0B0C;--carbon:#141416;--panel:#1A1A1D;--line:#2B2A27;--gold:#C9A84C;--gold2:#E9C766;--cream:#F2EBD9;--mute:#A79F8C}
+*{box-sizing:border-box}
+html,body{margin:0;background:radial-gradient(ellipse at 50% -10%,#24211A 0%,var(--ink) 55%) fixed;color:var(--cream);font-family:"DM Sans",system-ui,sans-serif;line-height:1.6}
+a{color:var(--gold2)}
+.wrap{max-width:860px;margin:0 auto;padding:40px 22px 80px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:56px}
+.plate{font-family:Cinzel,serif;font-weight:700;letter-spacing:3px;font-size:19px;color:#141008;padding:9px 18px;border-radius:4px;
+background:linear-gradient(180deg,#FFF1BE 0%,#F2D46A 20%,#D9B451 45%,#B8913A 65%,#E9C766 100%);box-shadow:inset 0 0 0 2px #7E5E1C,inset 0 0 0 4px #F6DF92,0 0 24px rgba(233,199,102,.25)}
+.seal{font-family:Cinzel,serif;font-size:11px;letter-spacing:3px;color:var(--gold)}
+h1{font-family:Cinzel,serif;font-weight:700;font-size:clamp(28px,5vw,46px);letter-spacing:4px;margin:0 0 6px;color:var(--gold2);min-height:1.3em;text-shadow:0 0 28px rgba(233,199,102,.25)}
+.cursor{display:inline-block;width:.55ch;background:var(--gold2);margin-left:4px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.lede{font-family:"Playfair Display",serif;font-style:italic;color:var(--mute);font-size:18px;margin:0 0 36px}
+.card{background:linear-gradient(180deg,var(--panel),var(--carbon));border:1px solid var(--line);border-top:2px solid var(--gold);border-radius:10px;padding:28px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 26px}
+.step{border:1px solid var(--line);border-radius:8px;padding:14px}
+.step b{display:block;font-family:Cinzel,serif;color:var(--gold2);font-size:13px;letter-spacing:2px}
+.step span{font-size:14px;color:#d8d0bd}
+label{display:block;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:18px 0 8px}
+input[type=text],textarea{width:100%;background:#0E0E10;border:1px solid #3a3730;border-radius:6px;color:var(--cream);padding:13px 14px;font:inherit;font-size:16px}
+input[type=text]:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.drop{border:1px dashed #5a5242;border-radius:8px;padding:22px;text-align:center;cursor:pointer;color:#d8d0bd}
+.drop.ok{border-style:solid;border-color:var(--gold);color:var(--gold2)}
+.check{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-size:14px;color:#cfc7b4}
+.check input{margin-top:4px;accent-color:var(--gold)}
+button{margin-top:24px;width:100%;padding:15px;border:0;border-radius:6px;cursor:pointer;font-family:Cinzel,serif;font-weight:700;letter-spacing:3px;font-size:15px;color:#141008;
+background:linear-gradient(180deg,#F6DF92,#C9A84C 60%,#B8913A)}
+button:disabled{opacity:.45;cursor:default}
+.err{color:#F0A58C;font-size:14px;margin-top:14px;min-height:1em}
+.note{font-size:12.5px;color:var(--mute);margin-top:16px}
+#table{display:none}
+.brief{font-size:16.5px}
+.brief h2{font-family:Cinzel,serif;font-size:16px;letter-spacing:2px;color:var(--gold2);border-bottom:1px solid #3a3426;padding-bottom:6px;margin:28px 0 10px}
+.brief p{margin:0 0 12px}.brief ul,.brief ol{margin:0 0 12px;padding-left:22px}.brief li{margin:4px 0}
+.brief strong{color:#fff}
+.who{font-family:Cinzel,serif;letter-spacing:3px;color:var(--gold);font-size:12px;margin:26px 0 6px}
+.q{background:#0E0E10;border-left:2px solid var(--gold);padding:10px 14px;border-radius:4px;color:#e9e2cf;margin:22px 0 4px}
+.left{font-size:12px;letter-spacing:2px;color:var(--mute);text-transform:uppercase;margin-top:10px}
+.thinking{color:var(--mute);font-style:italic}
+footer{text-align:center;margin-top:54px;font-family:Cinzel,serif;letter-spacing:3px;color:var(--gold);font-size:12px}
+footer small{display:block;font-family:"DM Sans";letter-spacing:0;color:#6f6858;margin-top:10px;font-size:11.5px}
+@media(max-width:640px){.steps{grid-template-columns:1fr}.card{padding:20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="plate">FISCAL AI</div><div class="seal">24/7 · 365</div></header>
+
+  <h1 id="title"><span id="tt"></span><span class="cursor">&nbsp;</span></h1>
+  <p class="lede">Take your seat at the table. Steward has your forecast in front of him.</p>
+
+  <section id="entry" class="card">
+    <div class="steps">
+      <div class="step"><b>01 · CODE</b><span>Your Etsy order number opens your session.</span></div>
+      <div class="step"><b>02 · UPLOAD</b><span>Share your completed 13-Week Forecast workbook.</span></div>
+      <div class="step"><b>03 · BRIEF</b><span>Steward delivers your brief, then takes your questions.</span></div>
+    </div>
+
+    <label for="code">Etsy order number</label>
+    <input id="code" type="text" inputmode="numeric" autocomplete="off" placeholder="e.g. 3412345678">
+
+    <label>Completed workbook</label>
+    <div class="drop" id="drop">Click to choose your .xlsx file<br><small>FiscalAI 13-Week Variable Income Forecast</small></div>
+    <input id="file" type="file" accept=".xlsx,.xls" hidden>
+
+    <div class="check"><input id="ok" type="checkbox"><span>My workbook contains figures only. I have not entered bank or card account numbers, Social Security numbers or passwords.</span></div>
+
+    <button id="go" disabled>ENTER THE BOARDROOM</button>
+    <div class="err" id="err"></div>
+    <p class="note">One Boardroom session per order: a full brief plus five follow-up questions within 24 hours. Steward provides planning analysis, not tax, legal or investment advice.</p>
+  </section>
+
+  <section id="table" class="card">
+    <div class="who">STEWARD</div>
+    <div class="brief" id="brief"></div>
+    <div id="thread"></div>
+    <div id="askbox" style="display:none">
+      <label for="question">Your question</label>
+      <textarea id="question" rows="3" placeholder="Ask Steward about a week, a figure or a decision…"></textarea>
+      <button id="ask">ASK STEWARD</button>
+      <div class="left" id="left"></div>
+      <div class="err" id="err2"></div>
+    </div>
+  </section>
+
+  <footer>HINDSIGHT · INSIGHT · FORESIGHT · WEALTH<small>© FiscalAI · fiscalai.org · Your workbook is used only to prepare your session.</small></footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let wbText="", code="";
+
+// Typed title
+(function(){const t="WELCOME TO THE BOARDROOM";let i=0;const el=$("tt");
+ (function step(){el.textContent=t.slice(0,++i);if(i<t.length)setTimeout(step,70)})();})();
+
+const ready=()=>{$("go").disabled=!($("code").value.replace(/\D/g,"").length>=9&&wbText&&$("ok").checked)};
+["code","ok"].forEach(id=>$(id).addEventListener("input",ready));
+$("ok").addEventListener("change",ready);
+$("drop").onclick=()=>$("file").click();
+
+const KEEP=["Settings","Income Log","Expense Log","13-Week Forecast"];
+$("file").onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  $("err").textContent="";
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{cellDates:true});
+    const names=wb.SheetNames.filter(n=>KEEP.some(k=>n.trim().toLowerCase()===k.toLowerCase()));
+    if(names.length<2) throw new Error("not ours");
+    wbText=names.map(n=>{
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:""})
+        .map(r=>r.map(c=>String(c).trim()).filter(Boolean).join(" | ")).filter(Boolean);
+      return `### ${n}\n`+rows.join("\n");
+    }).join("\n\n");
+    $("drop").classList.add("ok"); $("drop").innerHTML=`✓ ${f.name}<br><small>Ready for Steward</small>`;
+  }catch(err){wbText="";$("drop").classList.remove("ok");$("err").textContent="Please upload your completed FiscalAI 13-Week Variable Income Forecast (.xlsx).";}
+  ready();
+};
+
+function md(s){
+  const esc=s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const lines=esc.split("\n");let out="",list=null;
+  const inline=t=>t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/\*(.+?)\*/g,"<em>$1</em>");
+  const close=()=>{if(list){out+=`</${list}>`;list=null}};
+  for(const l of lines){
+    let m;
+    if(m=l.match(/^#{1,3}\s+(.*)/)){close();out+=`<h2>${inline(m[1])}</h2>`}
+    else if(m=l.match(/^\s*[-•]\s+(.*)/)){if(list!=="ul"){close();out+="<ul>";list="ul"}out+=`<li>${inline(m[1])}</li>`}
+    else if(m=l.match(/^\s*\d+[.)]\s+(.*)/)){if(list!=="ol"){close();out+="<ol>";list="ol"}out+=`<li>${inline(m[1])}</li>`}
+    else if(l.trim()){close();out+=`<p>${inline(l)}</p>`}
+  }
+  close();return out;
+}
+
+async function typeInto(el,text){
+  const html=md(text); el.innerHTML="";
+  const tmp=document.createElement("div"); tmp.innerHTML=html;
+  for(const node of Array.from(tmp.childNodes)){
+    const clone=node.cloneNode(true); const full=clone.innerHTML; clone.innerHTML=""; el.appendChild(clone);
+    // reveal block by block, fast
+    for(let i=0;i<=full.length;i+=6){clone.innerHTML=full.slice(0,i).replace(/<[^>]*$/,"");await new Promise(r=>setTimeout(r,8))}
+    clone.innerHTML=full;
+  }
+}
+
+async function call(payload){
+  const r=await fetch("/api/boardroom",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+  const d=await r.json().catch(()=>({error:"Something went wrong. Please try again."}));
+  if(!r.ok) throw new Error(d.error||"Please try again.");
+  return d;
+}
+
+function setLeft(n){
+  $("left").textContent=n>0?`${n} follow-up question${n===1?"":"s"} remaining`:"Your session is complete. Thank you for taking your seat at the table.";
+  $("askbox").style.display="block"; $("question").style.display=$("ask").style.display=n>0?"":"none";
+}
+
+$("go").onclick=async()=>{
+  code=$("code").value.replace(/\D/g,""); $("go").disabled=true; $("err").textContent="";
+  $("go").textContent="STEWARD IS REVIEWING YOUR FORECAST…";
+  try{
+    const d=await call({mode:"brief",code,workbook:wbText});
+    $("entry").style.display="none"; $("table").style.display="block";
+    window.scrollTo({top:0,behavior:"smooth"});
+    await typeInto($("brief"),d.brief); setLeft(d.followupsLeft);
+  }catch(e){$("err").textContent=e.message;$("go").textContent="ENTER THE BOARDROOM";ready()}
+};
+
+$("ask").onclick=async()=>{
+  const q=$("question").value.trim(); if(!q) return;
+  $("ask").disabled=true; $("err2").textContent="";
+  const qd=document.createElement("div"); qd.className="q"; qd.textContent=q; $("thread").appendChild(qd);
+  const who=document.createElement("div"); who.className="who"; who.textContent="STEWARD"; $("thread").appendChild(who);
+  const a=document.createElement("div"); a.className="brief"; a.innerHTML='<p class="thinking">Steward is considering your question…</p>'; $("thread").appendChild(a);
+  $("question").value="";
+  try{const d=await call({mode:"ask",code,question:q}); await typeInto(a,d.answer); setLeft(d.followupsLeft);}
+  catch(e){a.remove();who.remove();$("err2").textContent=e.message}
+  $("ask").disabled=false;
+};
+</script>
+</body>
+</html>
