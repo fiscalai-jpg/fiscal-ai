@@ -1,10 +1,11 @@
 // FiscalAI Boardroom — one Steward session per Etsy order number.
-// Session = one full brief + up to 5 follow-up questions within 24 hours.
+// Session = one full brief, then open conversation with Steward until the session window closes.
 import { getStore } from "@netlify/blobs";
 
 const MODEL = process.env.STEWARD_MODEL || "claude-haiku-5-5";
-const MAX_FOLLOWUPS = 5;
-const WINDOW_MS = 24 * 60 * 60 * 1000;
+const SESSION_MINUTES = Number(process.env.SESSION_MINUTES || 120);
+const WINDOW_MS = SESSION_MINUTES * 60 * 1000;
+const SAFETY_CAP = Number(process.env.QUESTION_SAFETY_CAP || 60); // silent spend guard, not advertised
 const DAILY_BRIEF_CAP = Number(process.env.DAILY_BRIEF_CAP || 60);
 const MAX_WORKBOOK_CHARS = 24000;
 
@@ -73,7 +74,7 @@ export default async (req) => {
 
   try {
     if (body.mode === "brief") {
-      if (s?.brief) return json(200, { brief: s.brief, followupsLeft: s.expires > now ? MAX_FOLLOWUPS - s.followups : 0, resumed: true });
+      if (s?.brief) return json(200, { brief: s.brief, history: s.history, expiresAt: s.expires, open: s.expires > now, resumed: true });
 
       const wb = String(body.workbook || "").slice(0, MAX_WORKBOOK_CHARS);
       if (wb.length < 200) return json(400, { error: "We could not read your forecast. Please upload your completed FiscalAI 13-Week workbook (.xlsx)." });
@@ -88,13 +89,13 @@ export default async (req) => {
       const brief = await callClaude([{ role: "user", content: first }]);
       s = { created: now, expires: now + WINDOW_MS, workbook: wb, brief, followups: 0, history: [] };
       await sessions.setJSON(code, s);
-      return json(200, { brief, followupsLeft: MAX_FOLLOWUPS });
+      return json(200, { brief, history: [], expiresAt: s.expires, open: true });
     }
 
     if (body.mode === "ask") {
       if (!s?.brief) return json(400, { error: "Please start your session by uploading your forecast." });
       if (now > s.expires) return json(403, { error: "This Boardroom session has closed. Thank you for taking your seat at the table." });
-      if (s.followups >= MAX_FOLLOWUPS) return json(403, { error: "You have used all five follow-up questions for this session." });
+      if (s.followups >= SAFETY_CAP) return json(403, { error: "We have covered a great deal today. This Boardroom session is now complete. Thank you for taking your seat at the table." });
       const q = String(body.question || "").trim().slice(0, 1200);
       if (!q) return json(400, { error: "Please type your question." });
 
@@ -103,14 +104,14 @@ export default async (req) => {
         { role: "assistant", content: s.brief },
       ];
       for (const h of s.history) messages.push({ role: "user", content: h.q }, { role: "assistant", content: h.a });
-      const left = MAX_FOLLOWUPS - s.followups - 1;
-      messages.push({ role: "user", content: `${q}\n\n(Follow-up questions remaining after this one: ${left}.)` });
+      const minsLeft = Math.max(0, Math.round((s.expires - now) / 60000));
+      messages.push({ role: "user", content: `${q}\n\n(Session time remaining: about ${minsLeft} minutes.)` });
 
       const answer = await callClaude(messages);
       s.history.push({ q, a: answer });
       s.followups += 1;
       await sessions.setJSON(code, s);
-      return json(200, { answer, followupsLeft: left });
+      return json(200, { answer, expiresAt: s.expires, open: true });
     }
 
     return json(400, { error: "Unknown request." });

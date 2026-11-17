@@ -79,7 +79,7 @@ footer small{display:block;font-family:"DM Sans";letter-spacing:0;color:#6f6858;
 
     <button id="go" disabled>ENTER THE BOARDROOM</button>
     <div class="err" id="err"></div>
-    <p class="note">One Boardroom session per order: a full brief plus five follow-up questions within 24 hours. Steward provides planning analysis, not tax, legal or investment advice.</p>
+    <p class="note">One Boardroom session per order: your full brief, then two hours at the table to ask Steward anything about your forecast. Steward provides planning analysis, not tax, legal or investment advice.</p>
   </section>
 
   <section id="table" class="card">
@@ -162,10 +162,17 @@ async function call(payload){
   return d;
 }
 
-function setLeft(n){
-  $("left").textContent=n>0?`${n} follow-up question${n===1?"":"s"} remaining`:"Your session is complete. Thank you for taking your seat at the table.";
-  $("askbox").style.display="block"; $("question").style.display=$("ask").style.display=n>0?"":"none";
+let timer;
+function setLeft(expiresAt,open){
+  $("askbox").style.display="block";
+  const tick=()=>{const m=Math.max(0,Math.round((expiresAt-Date.now())/60000));const live=open&&m>0;
+    $("left").textContent=live?`Session open · about ${m>=60?Math.floor(m/60)+" hr "+(m%60)+" min":m+" min"} remaining`:"Your Boardroom session is complete. Thank you for taking your seat at the table.";
+    $("question").style.display=$("ask").style.display=live?"":"none"; if(!live)clearInterval(timer)};
+  clearInterval(timer); tick(); timer=setInterval(tick,30000);
 }
+function addTurn(q,a){const qd=document.createElement("div");qd.className="q";qd.textContent=q;$("thread").appendChild(qd);
+  const w=document.createElement("div");w.className="who";w.textContent="STEWARD";$("thread").appendChild(w);
+  const ad=document.createElement("div");ad.className="brief";ad.innerHTML=md(a);$("thread").appendChild(ad);}
 
 $("go").onclick=async()=>{
   code=$("code").value.replace(/\D/g,""); $("go").disabled=true; $("err").textContent="";
@@ -174,7 +181,8 @@ $("go").onclick=async()=>{
     const d=await call({mode:"brief",code,workbook:wbText});
     $("entry").style.display="none"; $("table").style.display="block";
     window.scrollTo({top:0,behavior:"smooth"});
-    await typeInto($("brief"),d.brief); setLeft(d.followupsLeft);
+    if(d.resumed){$("brief").innerHTML=md(d.brief);(d.history||[]).forEach(h=>addTurn(h.q,h.a));}else{await typeInto($("brief"),d.brief);}
+    setLeft(d.expiresAt,d.open);
   }catch(e){$("err").textContent=e.message;$("go").textContent="ENTER THE BOARDROOM";ready()}
 };
 
@@ -185,7 +193,7 @@ $("ask").onclick=async()=>{
   const who=document.createElement("div"); who.className="who"; who.textContent="STEWARD"; $("thread").appendChild(who);
   const a=document.createElement("div"); a.className="brief"; a.innerHTML='<p class="thinking">Steward is considering your question…</p>'; $("thread").appendChild(a);
   $("question").value="";
-  try{const d=await call({mode:"ask",code,question:q}); await typeInto(a,d.answer); setLeft(d.followupsLeft);}
+  try{const d=await call({mode:"ask",code,question:q}); await typeInto(a,d.answer); setLeft(d.expiresAt,d.open);}
   catch(e){a.remove();who.remove();$("err2").textContent=e.message}
   $("ask").disabled=false;
 };
