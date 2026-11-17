@@ -65,14 +65,23 @@ footer small{display:block;font-family:"DM Sans";letter-spacing:0;color:#6f6858;
 .note2.on{opacity:1;transform:none}.note2 b{display:block;font-family:Cinzel,serif;color:var(--gold2);font-size:20px}.note2 span{font-size:11px;letter-spacing:2px;color:var(--mute);text-transform:uppercase}
 .dots:after{content:"";animation:dots 1.5s steps(4) infinite}@keyframes dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}
 .quote{margin-top:26px;font-size:13px;color:#7d7564;letter-spacing:1px}
+.hero{display:grid;grid-template-columns:1fr 250px;gap:20px;align-items:end;margin-bottom:6px}
+.hero img{width:250px;display:block;margin-bottom:-22px;-webkit-mask-image:linear-gradient(180deg,#000 78%,transparent);mask-image:linear-gradient(180deg,#000 78%,transparent)}
+.seat{display:grid;grid-template-columns:150px 1fr;gap:22px;align-items:center;border-bottom:1px solid #3a3426;padding-bottom:20px;margin-bottom:6px}
+.seat img{width:150px;height:170px;object-fit:cover;object-position:50% 10%;border-radius:8px;border:1px solid var(--gold);box-shadow:0 0 26px rgba(233,199,102,.22)}
+.seat .t1{font-family:Cinzel,serif;letter-spacing:3px;color:var(--gold2);font-size:20px}
+.seat .t2{font-family:"Playfair Display",serif;font-style:italic;color:var(--mute);font-size:15px;margin-top:6px}
+@media(max-width:640px){.hero{grid-template-columns:1fr}.hero img{width:180px;margin:0 auto -14px}.seat{grid-template-columns:96px 1fr}.seat img{width:96px;height:110px}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header><div class="plate">FISCAL AI</div><div class="seal">24/7 · 365</div></header>
 
+  <div class="hero" id="hero"><div>
   <h1 id="title"><span id="tt"></span><span class="cursor">&nbsp;</span></h1>
   <p class="lede">Take a seat at the table. Upload your completed 13-Week Cash Flow workbook and allow Steward a moment to review your numbers.</p>
+  </div><img src="steward-welcome.webp" alt="Steward, the AI finance partner behind FiscalAI, welcoming you to the Boardroom"></div>
 
   <section id="entry" class="card">
     <div class="steps">
@@ -108,6 +117,7 @@ footer small{display:block;font-family:"DM Sans";letter-spacing:0;color:#6f6858;
   </section>
 
   <section id="table" class="card">
+    <div class="seat"><img src="steward-desk.webp" alt="Steward at the Boardroom table"><div><div class="t1">YOUR BOARDROOM BRIEF</div><div class="t2">Prepared by Steward for your 13-Week Cash Flow Forecast</div></div></div>
     <div class="who">STEWARD</div>
     <div class="brief" id="brief"></div>
     <div id="thread"></div>
@@ -188,6 +198,7 @@ const num=v=>{const s=String(v).replace(/[$,\s]/g,"");if(s==="-"||s==="")return 
 const money=n=>(n<0?"-":"")+"$"+Math.abs(Math.round(n)).toLocaleString();
 let reviewTimers=[];
 function startReview(){
+  document.querySelector("#hero img").style.display="none";
   $("entry").style.display="none";$("review").style.display="block";window.scrollTo({top:0,behavior:"smooth"});
   const end=(fc["ending cash"]||[]).slice(0,13).map(num).filter(v=>v!==null);
   const season=(fc["season"]||[]).slice(0,13);
@@ -246,7 +257,7 @@ $("go").onclick=async()=>{
     window.scrollTo({top:0,behavior:"smooth"});
     if(d.resumed){$("brief").innerHTML=md(d.brief);(d.history||[]).forEach(h=>addTurn(h.q,h.a));}else{await typeInto($("brief"),d.brief);}
     setLeft(d.expiresAt,d.open);
-  }catch(e){endReview();$("entry").style.display="block";$("err").textContent=e.message;ready()}
+  }catch(e){endReview();document.querySelector("#hero img").style.display="";$("entry").style.display="block";$("err").textContent=e.message;ready()}
 };
 
 $("ask").onclick=async()=>{
