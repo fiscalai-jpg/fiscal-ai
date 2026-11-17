@@ -47,7 +47,9 @@ async function callClaude(messages) {
   });
   if (!r.ok) throw new Error(`Model error ${r.status}: ${(await r.text()).slice(0, 300)}`);
   const d = await r.json();
-  return d.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+  const text = (d.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+  if (!text) throw new Error(`Empty reply: stop=${d.stop_reason} blocks=${(d.content || []).map((b) => b.type).join(",")} model=${d.model}`);
+  return text;
 }
 
 export default async (req) => {
@@ -114,7 +116,7 @@ export default async (req) => {
     return json(400, { error: "Unknown request." });
   } catch (e) {
     console.error(e);
-    return json(502, { error: "Steward stepped away for a moment. Please try again." });
+    return json(502, { error: "Steward stepped away for a moment. Please try again.", detail: process.env.BOARDROOM_DEBUG ? String(e.message) : undefined });
   }
 };
 
