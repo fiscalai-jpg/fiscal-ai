@@ -72,6 +72,18 @@ footer small{display:block;font-family:"DM Sans";letter-spacing:0;color:#6f6858;
 .seat .t1{font-family:Cinzel,serif;letter-spacing:3px;color:var(--gold2);font-size:20px}
 .seat .t2{font-family:"Playfair Display",serif;font-style:italic;color:var(--mute);font-size:15px;margin-top:6px}
 @media(max-width:640px){.hero{grid-template-columns:1fr}.hero img{width:180px;margin:0 auto -14px}.seat{grid-template-columns:96px 1fr}.seat img{width:96px;height:110px}}
+.desk{position:relative;width:150px;height:150px;margin:18px auto 0}
+.desk img{width:150px;height:150px;object-fit:cover;object-position:50% 12%;border-radius:50%;border:2px solid var(--gold);animation:bob 2.4s ease-in-out infinite;position:relative;z-index:2}
+.desk:before,.desk:after{content:"";position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(233,199,102,.55);animation:ring 2s ease-out infinite;z-index:1}
+.desk:after{animation-delay:1s}
+.desk .shine{position:absolute;inset:0;border-radius:50%;z-index:3;overflow:hidden;pointer-events:none}
+.desk .shine:before{content:"";position:absolute;top:-20%;left:-60%;width:40%;height:140%;background:linear-gradient(90deg,transparent,rgba(255,240,190,.35),transparent);transform:rotate(20deg);animation:shine 2.2s ease-in-out infinite}
+.float{position:absolute;font-family:Cinzel,serif;color:var(--gold2);font-size:13px;opacity:0;z-index:4;animation:floatup 2.6s ease-out forwards;white-space:nowrap;text-shadow:0 0 10px rgba(233,199,102,.5)}
+.ticker{font-family:Cinzel,serif;color:var(--gold2);font-size:15px;letter-spacing:2px;margin-top:12px;min-height:1.3em}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-5px) rotate(1deg)}}
+@keyframes ring{0%{transform:scale(.92);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+@keyframes shine{0%{left:-60%}60%,100%{left:130%}}
+@keyframes floatup{0%{opacity:0;transform:translateY(0)}15%{opacity:1}100%{opacity:0;transform:translateY(-70px)}}
 </style>
 </head>
 <body>
@@ -106,6 +118,8 @@ footer small{display:block;font-family:"DM Sans";letter-spacing:0;color:#6f6858;
 
   <section id="review" class="card">
     <div class="label">STEWARD IS REVIEWING YOUR FORECAST</div>
+    <div class="desk" id="desk"><img src="steward-desk.webp" alt="Steward at work"><div class="shine"></div></div>
+    <div class="ticker" id="ticker"></div>
     <div class="bars" id="bars"></div>
     <div class="wk" id="wk"></div>
     <div class="status" id="status"><span id="stxt">Opening your workbook</span><span class="dots"></span></div>
@@ -208,22 +222,27 @@ function startReview(){
   $("bars").innerHTML=end.map((v,i)=>`<div class="bar ${/famine/i.test(season[i]||"")?"famine":""}" data-h="${Math.max(4,Math.abs(v)/max*100)}"></div>`).join("");
   $("wk").innerHTML=end.map((v,i)=>`<span>${weeks[i]?String(weeks[i]).split(" ").slice(0,2).join(" "):"Wk "+(i+1)}</span>`).join("");
   const bars=[...document.querySelectorAll(".bar")];
-  bars.forEach((b,i)=>reviewTimers.push(setTimeout(()=>b.style.height=b.dataset.h+"%",300+i*180)));
+  bars.forEach((b,i)=>reviewTimers.push(setTimeout(()=>b.style.height=b.dataset.h+"%",500+i*420)));
   const famine=season.filter(s=>/famine/i.test(s)).length;
   const low=end.length?Math.min(...end):null; const lowWk=end.indexOf(low);
   const steps=[
     [0,"Opening your workbook"],
-    [2200,"Reading your settings and cash buffer"],
-    [4600,"Mapping thirteen weeks of cash"],
-    [7400,"Marking every lean week"],
-    [10200,"Looking for your biggest opportunity"],
-    [13200,"Preparing your recommendations"],
-    [17000,"Drafting your Boardroom brief"],
-    [24000,"Polishing the final details"]];
+    [1800,"Reading your settings and cash buffer"],
+    [3600,"Mapping thirteen weeks of cash"],
+    [5600,"Marking every lean week"],
+    [7600,"Looking for your biggest opportunity"],
+    [9600,"Preparing your recommendations"],
+    [11400,"Drafting your Boardroom brief"],
+    [18000,"Polishing the final details"]];
   steps.forEach(([ms,txt])=>reviewTimers.push(setTimeout(()=>{$("stxt").textContent=txt},ms)));
-  reviewTimers.push(setTimeout(()=>{$("v1").textContent=open!==null&&!isNaN(open)?money(open):"—";$("n1").classList.add("on")},2600));
-  reviewTimers.push(setTimeout(()=>{$("v2").textContent=season.length?famine:"—";$("n2").classList.add("on")},7800));
-  reviewTimers.push(setTimeout(()=>{$("v3").textContent=low!==null?money(low)+(lowWk>=0?" · Wk "+(lowWk+1):""):"—";$("n3").classList.add("on")},10600));
+  reviewTimers.push(setTimeout(()=>{$("v1").textContent=open!==null&&!isNaN(open)?money(open):"—";$("n1").classList.add("on")},2400));
+  reviewTimers.push(setTimeout(()=>{$("v2").textContent=season.length?famine:"—";$("n2").classList.add("on")},6000));
+  reviewTimers.push(setTimeout(()=>{$("v3").textContent=low!==null?money(low)+(lowWk>=0?" · Wk "+(lowWk+1):""):"—";$("n3").classList.add("on")},8600));
+  const vals=end.length?end:[8500,7200,9100,6400,5300];
+  let ti=0;reviewTimers.push(setInterval(()=>{$("ticker").textContent=`WK ${ti%vals.length+1}  ·  ${money(vals[ti%vals.length])}`;ti++},260));
+  reviewTimers.push(setInterval(()=>{const f=document.createElement("div");f.className="float";
+    const v=vals[Math.floor(Math.random()*vals.length)];f.textContent=["+","−","Σ","%",""][Math.floor(Math.random()*5)]+money(v).replace("-","");
+    f.style.left=(Math.random()*170-10)+"px";f.style.top=(90+Math.random()*50)+"px";$("desk").appendChild(f);setTimeout(()=>f.remove(),2700)},420));
   let k=0;const scan=setInterval(()=>{bars.forEach(b=>b.classList.remove("scan"));if(bars.length)bars[k++%bars.length].classList.add("scan")},350);
   reviewTimers.push(scan);
 }
@@ -252,7 +271,7 @@ $("go").onclick=async()=>{
   code=$("code").value.replace(/\D/g,""); $("go").disabled=true; $("err").textContent="";
   startReview();
   try{
-    const d=await call({mode:"brief",code,workbook:wbText});
+    const [d]=await Promise.all([call({mode:"brief",code,workbook:wbText}),new Promise(r=>setTimeout(r,12500))]);
     endReview(); $("table").style.display="block";
     window.scrollTo({top:0,behavior:"smooth"});
     if(d.resumed){$("brief").innerHTML=md(d.brief);(d.history||[]).forEach(h=>addTurn(h.q,h.a));}else{await typeInto($("brief"),d.brief);}
