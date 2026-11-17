@@ -1,0 +1,3 @@
+/faisteward       https://fiscalai-boardroom.netlify.app/faisteward/        200
+/faisteward/*     https://fiscalai-boardroom.netlify.app/faisteward/:splat  200
+/api/boardroom    https://fiscalai-boardroom.netlify.app/api/boardroom      200
