@@ -3,7 +3,7 @@
 import { getStore } from "@netlify/blobs";
 
 const MODEL = process.env.STEWARD_MODEL || "claude-haiku-5-5";
-const SESSION_MINUTES = Number(process.env.SESSION_MINUTES || 120);
+const SESSION_MINUTES = Number(process.env.SESSION_MINUTES || 60);
 const WINDOW_MS = SESSION_MINUTES * 60 * 1000;
 const SAFETY_CAP = Number(process.env.QUESTION_SAFETY_CAP || 60); // silent spend guard, not advertised
 const DAILY_BRIEF_CAP = Number(process.env.DAILY_BRIEF_CAP || 60);

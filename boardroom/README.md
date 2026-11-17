@@ -11,7 +11,7 @@ Session storage: Netlify Blobs (automatic, no setup)
 - ORDER_ALLOWLIST     optional. Comma-separated Etsy order numbers. When set, only these codes open a session.
 
 ## Session rules
-One session per order number: one brief, then open Q&A for SESSION_MINUTES (default 120). QUESTION_SAFETY_CAP (default 60) is a silent spend guard.
+One session per order number: one brief, then open Q&A for SESSION_MINUTES (default 60). QUESTION_SAFETY_CAP (default 60) is a silent spend guard.
 
 ## Connect to fiscalai.org (main site _redirects file)
 /faisteward      https://BOARDROOM-SITE.netlify.app/faisteward/      200
